@@ -1,0 +1,33 @@
+export const theme = {
+  colors: {
+    background: "#08111F",
+    surface: "#101A2B",
+    surfaceAlt: "#152238",
+    card: "#111C2F",
+    border: "rgba(255,255,255,0.08)",
+    text: "#F5F7FB",
+    muted: "#9AA8BF",
+    subtle: "#6E7C93",
+    primary: "#F2C14E",
+    accent: "#62B3FF",
+    success: "#7EDC84",
+    danger: "#FF7D6C",
+    financial: "#79D66B",
+    career: "#61AFFF",
+    skills: "#C27CFF",
+    personal: "#FF7FA4",
+  },
+  spacing: {
+    xs: 6,
+    sm: 10,
+    md: 14,
+    lg: 18,
+    xl: 24,
+    xxl: 32,
+  },
+  radius: {
+    sm: 12,
+    md: 18,
+    lg: 24,
+  },
+};
