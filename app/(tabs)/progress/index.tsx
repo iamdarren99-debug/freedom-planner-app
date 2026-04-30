@@ -12,6 +12,7 @@ import { SectionHeader } from "../../../src/components/ui/SectionHeader";
 import { GoalProgressGroup } from "../../../src/components/progress/GoalProgressGroup";
 import { MetricCard } from "../../../src/components/progress/MetricCard";
 import { ProgressBarRow } from "../../../src/components/progress/ProgressBarRow";
+import { ReviewCard } from "../../../src/components/progress/ReviewCard";
 import { useAppStore } from "../../../src/store/useAppStore";
 import { TargetAreaId } from "../../../src/types/planner";
 import {
@@ -28,6 +29,7 @@ import {
   buildWeeklyStats,
   clampPercent,
 } from "../../../src/utils/progressMetrics";
+import { buildMonthlyReview, buildWeeklyReview } from "../../../src/utils/reviewMetrics";
 
 const AREA_ORDER: TargetAreaId[] = [
   "financial",
@@ -54,6 +56,14 @@ export default function ProgressScreen() {
   const personalStats = useMemo(
     () => buildPersonalStats(tasks, goals, journalEntries),
     [goals, journalEntries, tasks],
+  );
+  const weeklyReview = useMemo(
+    () => buildWeeklyReview({ goals, journalEntries, progressLogs, tasks }),
+    [goals, journalEntries, progressLogs, tasks],
+  );
+  const monthlyReview = useMemo(
+    () => buildMonthlyReview({ goals, journalEntries, progressLogs, tasks }),
+    [goals, journalEntries, progressLogs, tasks],
   );
 
   const selectedGoal = goals.find((goal) => goal.id === selectedGoalId) ?? goals[0];
@@ -105,6 +115,12 @@ export default function ProgressScreen() {
             );
           })}
         </View>
+
+        <SectionHeader title="Weekly Review" />
+        <ReviewCard rows={weeklyReview} title="This week" />
+
+        <SectionHeader title="Monthly Review" />
+        <ReviewCard rows={monthlyReview} title="This month" />
 
         <SectionHeader title="Manual progress log" />
         <Card style={styles.formCard}>
