@@ -1,19 +1,40 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import { theme } from "../../constants/theme";
+import { DefaultRoutine } from "../../types/planner";
 import { Card } from "../ui/Card";
 
-export function RoutineCard({ isOffDay }: { isOffDay: boolean }) {
+export function RoutineCard({
+  isOffDay,
+  routine,
+}: {
+  isOffDay: boolean;
+  routine?: DefaultRoutine;
+}) {
   const sections = isOffDay
     ? [
-        { title: "Build", detail: "2 hours building something useful." },
-        { title: "Monetization", detail: "2 hours outreach, sales, or client work." },
-        { title: "Review", detail: "1 hour review + planning." },
+        { title: "Build", detail: routine?.offDayBuild ?? "2 hours building something useful." },
+        {
+          title: "Monetization",
+          detail: routine?.offDayMonetization ?? "2 hours outreach, sales, or client work.",
+        },
+        { title: "Review", detail: routine?.offDayReview ?? "1 hour review + planning." },
       ]
     : [
-        { title: "Morning", detail: "5 min spending check + 20-30 min learning/research." },
-        { title: "Work day", detail: "Protect energy. Capture ideas, do not overplan." },
-        { title: "Night", detail: "Build or improve something, review today, write short notes." },
+        {
+          title: "Morning",
+          detail: routine?.workdayMorning ?? "5 min spending check + 20-30 min learning/research.",
+        },
+        {
+          title: "Work day",
+          detail: routine?.workdayWork ?? "Protect energy. Capture ideas, do not overplan.",
+        },
+        {
+          title: "Night",
+          detail:
+            routine?.workdayNight ??
+            "Build or improve something, review today, write short notes.",
+        },
       ];
 
   return (

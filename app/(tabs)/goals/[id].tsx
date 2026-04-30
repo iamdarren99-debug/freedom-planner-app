@@ -2,7 +2,6 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { ReactNode, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { AREA_META } from "../../../src/constants/app";
 import { theme } from "../../../src/constants/theme";
 import { PrimaryButton } from "../../../src/components/forms/PrimaryButton";
 import { TextField } from "../../../src/components/forms/TextField";
@@ -14,6 +13,7 @@ import { Screen } from "../../../src/components/ui/Screen";
 import { SectionHeader } from "../../../src/components/ui/SectionHeader";
 import { useAppStore } from "../../../src/store/useAppStore";
 import { Goal, GoalPriority, GoalStatus } from "../../../src/types/planner";
+import { getAreaMeta } from "../../../src/utils/areaMeta";
 import { formatDate, goalStatusLabel } from "../../../src/utils/planning";
 import { getJournalEntriesByGoal } from "../../../src/utils/selectors";
 
@@ -23,6 +23,7 @@ const STATUSES: GoalStatus[] = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "PAUS
 export default function GoalDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const goal = useAppStore((state) => state.goals.find((item) => item.id === id));
+  const appSettings = useAppStore((state) => state.appSettings);
   const tasks = useAppStore((state) => state.tasks.filter((task) => task.goalId === id));
   const allTasks = useAppStore((state) => state.tasks);
   const journalEntries = useAppStore((state) =>
@@ -47,7 +48,7 @@ export default function GoalDetailScreen() {
     );
   }
 
-  const area = AREA_META[goal.targetAreaId];
+  const area = getAreaMeta(goal.targetAreaId, appSettings);
 
   return (
     <Screen>

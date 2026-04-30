@@ -39,6 +39,7 @@ import { toOptionalNumber } from "../../../src/utils/text";
 export default function PlannerScreen() {
   const goals = useAppStore((state) => state.goals);
   const journalEntries = useAppStore((state) => state.journalEntries);
+  const appSettings = useAppStore((state) => state.appSettings);
   const tasks = useAppStore((state) => state.tasks);
   const weeklySystem = useAppStore((state) => state.weeklySystem);
   const addTask = useAppStore((state) => state.addTask);
@@ -156,7 +157,9 @@ export default function PlannerScreen() {
             <Text style={styles.toggleTitle}>{offDay ? "Off-day plan" : "Workday plan"}</Text>
             <Text style={styles.toggleAction}>{routineExpanded ? "Hide" : "Show"}</Text>
           </Pressable>
-          {routineExpanded ? <RoutineCard isOffDay={offDay} /> : null}
+          {routineExpanded ? (
+            <RoutineCard isOffDay={offDay} routine={appSettings.defaultRoutine} />
+          ) : null}
         </Card>
 
         <View style={styles.sectionBlock}>

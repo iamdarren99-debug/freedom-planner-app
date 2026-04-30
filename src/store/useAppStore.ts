@@ -76,6 +76,12 @@ interface AppActions {
   updateJournalEntry: (id: string, updates: UpdateJournalEntryPayload) => void;
   deleteJournalEntry: (id: string) => void;
   addProgressLog: (payload: AddProgressLogPayload) => ProgressLog;
+  addMindsetReminder: (payload: Omit<MindsetReminder, "id"> & Partial<Pick<MindsetReminder, "id">>) => MindsetReminder;
+  deleteMindsetReminder: (id: string) => void;
+  importAppData: (payload: unknown) => boolean;
+  updateMindsetReminder: (id: string, updates: Partial<Omit<MindsetReminder, "id">>) => void;
+  updateThirtyDayPlan: (updates: Partial<ThirtyDayPlan>) => void;
+  updateWeeklySystem: (updates: Partial<WeeklySystem>) => void;
   updateAppSettings: (updates: Partial<AppSettings>) => void;
   resetToSeedData: () => void;
   resetDemoData: () => void;
@@ -524,6 +530,63 @@ export const useAppStore = create<AppStore>()(
         }));
         return log;
       },
+      addMindsetReminder: (payload) => {
+        const reminder: MindsetReminder = {
+          ...payload,
+          id: payload.id ?? createId("reminder"),
+        };
+
+        set((state) => ({
+          mindsetReminders: [reminder, ...state.mindsetReminders],
+        }));
+        return reminder;
+      },
+      deleteMindsetReminder: (id) =>
+        set((state) => ({
+          mindsetReminders: state.mindsetReminders.filter((reminder) => reminder.id !== id),
+        })),
+      importAppData: (payload) => {
+        if (!isPersistedAppState(payload)) {
+          console.warn("Ignored invalid planner import");
+          return false;
+        }
+
+        set((state) => ({
+          targetAreas: payload.targetAreas ?? state.targetAreas,
+          goals: payload.goals ?? state.goals,
+          tasks: payload.tasks ?? state.tasks,
+          journalEntries: payload.journalEntries ?? state.journalEntries,
+          progressLogs: payload.progressLogs ?? state.progressLogs,
+          weeklySystem: payload.weeklySystem ?? state.weeklySystem,
+          thirtyDayPlan: payload.thirtyDayPlan ?? state.thirtyDayPlan,
+          mindsetReminders: payload.mindsetReminders ?? state.mindsetReminders,
+          appSettings: payload.appSettings
+            ? { ...state.appSettings, ...payload.appSettings }
+            : state.appSettings,
+          dailyCompletions: payload.dailyCompletions ?? state.dailyCompletions,
+        }));
+        return true;
+      },
+      updateMindsetReminder: (id, updates) =>
+        set((state) => ({
+          mindsetReminders: state.mindsetReminders.map((reminder) =>
+            reminder.id === id ? { ...reminder, ...updates } : reminder,
+          ),
+        })),
+      updateThirtyDayPlan: (updates) =>
+        set((state) => ({
+          thirtyDayPlan: {
+            ...state.thirtyDayPlan,
+            ...updates,
+          },
+        })),
+      updateWeeklySystem: (updates) =>
+        set((state) => ({
+          weeklySystem: {
+            ...state.weeklySystem,
+            ...updates,
+          },
+        })),
       updateAppSettings: (updates) =>
         set((state) => ({
           appSettings: {

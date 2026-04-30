@@ -1,9 +1,10 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { AREA_META } from "../../constants/app";
 import { theme } from "../../constants/theme";
 import { Goal } from "../../types/planner";
+import { getAreaMeta } from "../../utils/areaMeta";
 import { TaskSuggestion } from "../../utils/suggestions";
+import { useAppStore } from "../../store/useAppStore";
 import { Card } from "../ui/Card";
 
 interface SuggestionCardProps {
@@ -13,7 +14,10 @@ interface SuggestionCardProps {
 }
 
 export function SuggestionCard({ goal, onAdd, suggestion }: SuggestionCardProps) {
-  const accentColor = goal ? AREA_META[goal.targetAreaId].color : theme.colors.primary;
+  const appSettings = useAppStore((state) => state.appSettings);
+  const accentColor = goal
+    ? getAreaMeta(goal.targetAreaId, appSettings).color
+    : appSettings.themeAccentColor || theme.colors.primary;
 
   return (
     <Card accent={accentColor} style={styles.suggestionCard}>

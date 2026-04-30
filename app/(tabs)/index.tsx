@@ -3,13 +3,13 @@ import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { AREA_META } from "../../src/constants/app";
 import { theme } from "../../src/constants/theme";
 import { EmptyState } from "../../src/components/ui/EmptyState";
 import { Card } from "../../src/components/ui/Card";
 import { Screen } from "../../src/components/ui/Screen";
 import { SectionHeader } from "../../src/components/ui/SectionHeader";
 import { useAppStore } from "../../src/store/useAppStore";
+import { getAreaMeta } from "../../src/utils/areaMeta";
 import { formatDate, getDateKey, priorityRank } from "../../src/utils/planning";
 import { Goal, MindsetReminder, Task } from "../../src/types/planner";
 
@@ -151,8 +151,9 @@ function TodayTaskCard({
   onComplete: () => void;
   task: Task;
 }) {
-  const area = goal ? AREA_META[goal.targetAreaId] : undefined;
-  const accentColor = area?.color ?? theme.colors.primary;
+  const appSettings = useAppStore((state) => state.appSettings);
+  const area = goal ? getAreaMeta(goal.targetAreaId, appSettings) : undefined;
+  const accentColor = area?.color ?? appSettings.themeAccentColor ?? theme.colors.primary;
 
   return (
     <Card style={styles.taskCard}>

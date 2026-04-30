@@ -1,9 +1,9 @@
 import { useRouter } from "expo-router";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { AREA_META } from "../../constants/app";
 import { theme } from "../../constants/theme";
 import { Goal } from "../../types/planner";
+import { getAreaMeta } from "../../utils/areaMeta";
 import { goalStatusLabel } from "../../utils/planning";
 import { useAppStore } from "../../store/useAppStore";
 import { Badge } from "../ui/Badge";
@@ -15,7 +15,8 @@ interface GoalCardProps {
 
 export function GoalCard({ goal }: GoalCardProps) {
   const router = useRouter();
-  const area = AREA_META[goal.targetAreaId];
+  const appSettings = useAppStore((state) => state.appSettings);
+  const area = getAreaMeta(goal.targetAreaId, appSettings);
   const deleteGoal = useAppStore((state) => state.deleteGoal);
 
   const confirmDelete = () => {

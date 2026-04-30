@@ -90,9 +90,27 @@ export interface DailyCompletion {
 
 export type DailyCompletionsByDate = Record<string, DailyCompletion[]>;
 
+export interface TargetAreaCustomization {
+  color?: string;
+  description?: string;
+  label?: string;
+}
+
+export interface DefaultRoutine {
+  offDayBuild: string;
+  offDayMonetization: string;
+  offDayReview: string;
+  workdayMorning: string;
+  workdayNight: string;
+  workdayWork: string;
+}
+
 export interface AppSettings {
   dailyFocusLimit: number;
+  defaultRoutine?: DefaultRoutine;
   lastResetAt?: string;
+  targetAreaOverrides?: Partial<Record<TargetAreaId, TargetAreaCustomization>>;
+  themeAccentColor?: string;
 }
 
 export interface GoalProgressSummary {

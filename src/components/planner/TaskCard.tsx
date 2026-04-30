@@ -1,10 +1,11 @@
 import { Alert, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { AREA_META } from "../../constants/app";
 import { theme } from "../../constants/theme";
 import { Goal, JournalEntry, Task } from "../../types/planner";
+import { getAreaMeta } from "../../utils/areaMeta";
 import { formatDate } from "../../utils/planning";
+import { useAppStore } from "../../store/useAppStore";
 import { SmallAction } from "../forms/SmallAction";
 import { Card } from "../ui/Card";
 
@@ -27,7 +28,10 @@ export function TaskCard({
   onSkip,
   task,
 }: TaskCardProps) {
-  const accentColor = goal ? AREA_META[goal.targetAreaId].color : theme.colors.primary;
+  const appSettings = useAppStore((state) => state.appSettings);
+  const accentColor = goal
+    ? getAreaMeta(goal.targetAreaId, appSettings).color
+    : appSettings.themeAccentColor || theme.colors.primary;
   const done = task.status === "DONE";
   const skipped = task.status === "SKIPPED";
 

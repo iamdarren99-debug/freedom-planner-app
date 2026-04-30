@@ -9,12 +9,23 @@ import {
   ThirtyDayPlan,
   WeeklySystem,
 } from "../types/planner";
+import { theme } from "../constants/theme";
 
 const seedTimestamp = "2026-04-30T00:00:00.000Z";
 const seedDate = "2026-04-30";
 
 export const seedAppSettings: AppSettings = {
   dailyFocusLimit: 5,
+  defaultRoutine: {
+    workdayMorning: "5 min spending check + 20-30 min learning/research.",
+    workdayWork: "Protect energy. Capture ideas, do not overplan.",
+    workdayNight: "Build or improve something, review today, write short notes.",
+    offDayBuild: "2 hours building something useful.",
+    offDayMonetization: "2 hours outreach, sales, or client work.",
+    offDayReview: "1 hour review + planning.",
+  },
+  targetAreaOverrides: {},
+  themeAccentColor: theme.colors.primary,
 };
 
 type GoalSeedInput = Omit<Goal, "createdAt" | "updatedAt" | "status" | "progressPercentage"> &

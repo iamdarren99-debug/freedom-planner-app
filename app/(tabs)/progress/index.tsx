@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
 
-import { AREA_META } from "../../../src/constants/app";
 import { theme } from "../../../src/constants/theme";
 import { PrimaryButton } from "../../../src/components/forms/PrimaryButton";
 import { TextField } from "../../../src/components/forms/TextField";
@@ -15,6 +14,7 @@ import { ProgressBarRow } from "../../../src/components/progress/ProgressBarRow"
 import { ReviewCard } from "../../../src/components/progress/ReviewCard";
 import { useAppStore } from "../../../src/store/useAppStore";
 import { TargetAreaId } from "../../../src/types/planner";
+import { getAreaMeta } from "../../../src/utils/areaMeta";
 import {
   averageProgress,
   formatDate,
@@ -40,6 +40,7 @@ const AREA_ORDER: TargetAreaId[] = [
 
 export default function ProgressScreen() {
   const goals = useAppStore((state) => state.goals);
+  const appSettings = useAppStore((state) => state.appSettings);
   const journalEntries = useAppStore((state) => state.journalEntries);
   const progressLogs = useAppStore((state) => state.progressLogs);
   const tasks = useAppStore((state) => state.tasks);
@@ -102,7 +103,7 @@ export default function ProgressScreen() {
 
         <View style={styles.stack}>
           {AREA_ORDER.map((areaId) => {
-            const area = AREA_META[areaId];
+            const area = getAreaMeta(areaId, appSettings);
             const progress = averageProgress(goalsByArea(goals, areaId));
 
             return (
@@ -165,6 +166,7 @@ export default function ProgressScreen() {
 
         <SectionHeader title="Financial Progress" />
         <GoalProgressGroup
+          appSettings={appSettings}
           goals={goalsByArea(goals, "financial")}
           logs={progressLogs}
           titles={["Cash Stability", "Savings Growth", "Debt Freedom"]}

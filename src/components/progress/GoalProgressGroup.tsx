@@ -1,16 +1,18 @@
 import { StyleSheet, View } from "react-native";
 
-import { AREA_META } from "../../constants/app";
 import { theme } from "../../constants/theme";
-import { Goal, ProgressLog } from "../../types/planner";
+import { AppSettings, Goal, ProgressLog } from "../../types/planner";
+import { getAreaMeta } from "../../utils/areaMeta";
 import { latestLogForGoal } from "../../utils/progressMetrics";
 import { ProgressBarRow } from "./ProgressBarRow";
 
 export function GoalProgressGroup({
   goals,
   logs,
+  appSettings,
   titles,
 }: {
+  appSettings?: AppSettings;
   goals: Goal[];
   logs: ProgressLog[];
   titles: string[];
@@ -28,7 +30,7 @@ export function GoalProgressGroup({
 
         return (
           <ProgressBarRow
-            color={AREA_META[goal.targetAreaId].color}
+            color={getAreaMeta(goal.targetAreaId, appSettings).color}
             key={goal.id}
             label={goal.title}
             note={latestLog?.note}
