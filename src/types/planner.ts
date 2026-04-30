@@ -28,3 +28,11 @@ export interface JournalEntry {
   content: string;
   createdAt: string;
 }
+
+export interface DailyCompletion {
+  goalId: string;
+  item: string;
+  completedAt: string;
+}
+
+export type DailyCompletionsByDate = Record<string, DailyCompletion[]>;

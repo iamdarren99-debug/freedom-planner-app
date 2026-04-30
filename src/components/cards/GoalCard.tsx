@@ -16,7 +16,12 @@ export function GoalCard({ goal }: GoalCardProps) {
 
   return (
     <Pressable
-      onPress={() => router.push(`/goals/${goal.id}`)}
+      onPress={() =>
+        router.push({
+          pathname: "/goals/[id]",
+          params: { id: goal.id },
+        })
+      }
       style={({ pressed }) => [styles.card, { opacity: pressed ? 0.94 : 1 }]}
     >
       <View style={styles.row}>

@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
 import { AREA_META } from "../../src/constants/app";
@@ -28,6 +28,7 @@ export default function GoalDetailScreen() {
 
   return (
     <Screen>
+      <Stack.Screen options={{ title: goal.title }} />
       <View style={styles.hero}>
         <Text style={[styles.area, { color: area.color }]}>{area.label}</Text>
         <Text style={styles.title}>{goal.title}</Text>

@@ -3,19 +3,24 @@ import { View, StyleSheet, Text } from "react-native";
 import { APP_NAME, APP_TAGLINE, AREA_META } from "../src/constants/app";
 import { theme } from "../src/constants/theme";
 import { useAppStore } from "../src/store/useAppStore";
-import { averageProgress, priorityRank } from "../src/utils/planning";
+import { getDateKey, isFocusItemComplete, priorityRank } from "../src/utils/planning";
 import { Screen } from "../src/components/ui/Screen";
 import { SectionHeader } from "../src/components/ui/SectionHeader";
 import { StatCard } from "../src/components/cards/StatCard";
 import { GoalCard } from "../src/components/cards/GoalCard";
+import { FocusItemRow } from "../src/components/ui/FocusItemRow";
+import { EmptyState } from "../src/components/ui/EmptyState";
 
 export default function DashboardScreen() {
   const goals = useAppStore((state) => state.goals);
+  const dailyCompletions = useAppStore((state) => state.dailyCompletions);
+  const toggleFocusItem = useAppStore((state) => state.toggleFocusItem);
 
   const topGoals = [...goals]
     .sort((a, b) => priorityRank(b.priority) - priorityRank(a.priority))
     .slice(0, 3);
-  const activeGoals = goals.filter((goal) => goal.status !== "planned").length;
+  const activeGoals = goals.filter((goal) => goal.status !== "planned");
+  const todayCompletions = dailyCompletions[getDateKey()] ?? [];
 
   return (
     <Screen>
@@ -27,12 +32,45 @@ export default function DashboardScreen() {
 
       <View style={styles.stats}>
         <StatCard accent={theme.colors.primary} label="Total goals" value={String(goals.length)} />
-        <StatCard accent={theme.colors.accent} label="Active goals" value={String(activeGoals)} />
+        <StatCard
+          accent={theme.colors.accent}
+          label="Active goals"
+          value={String(activeGoals.length)}
+        />
         <StatCard
           accent={theme.colors.success}
-          label="Average progress"
-          value={`${averageProgress(goals)}%`}
+          label="Completed today"
+          value={String(todayCompletions.length)}
         />
+      </View>
+
+      <SectionHeader
+        eyebrow="Today"
+        title="Daily focus loop"
+        subtitle="Check off the weekly focus items you actually move today."
+      />
+      <View style={styles.stack}>
+        {activeGoals.length === 0 ? (
+          <EmptyState
+            title="No active goals"
+            description="Activate a goal first, then its weekly focus items can become daily execution steps."
+          />
+        ) : (
+          activeGoals.flatMap((goal) => {
+            const area = AREA_META[goal.area];
+
+            return goal.weeklyFocus.map((item) => (
+              <FocusItemRow
+                key={`${goal.id}-${item}`}
+                accentColor={area.color}
+                complete={isFocusItemComplete(todayCompletions, goal.id, item)}
+                goalTitle={goal.title}
+                item={item}
+                onPress={() => toggleFocusItem(goal.id, item)}
+              />
+            ));
+          })
+        )}
       </View>
 
       <SectionHeader

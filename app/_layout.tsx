@@ -1,7 +1,7 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { useHydrated } from "../src/hooks/useHydrated";
 import { theme } from "../src/constants/theme";
@@ -109,17 +109,6 @@ export default function RootLayout() {
             tabBarIcon: ({ color, size }) => (
               <MaterialCommunityIcons color={color} name="cog-outline" size={size} />
             ),
-          }}
-        />
-        <Tabs.Screen
-          name="goals/[id]"
-          options={{
-            href: null,
-            title: "Goal Details",
-            headerShown: true,
-            tabBarStyle: {
-              display: "none",
-            },
           }}
         />
       </Tabs>
