@@ -1,36 +1,134 @@
-import { View } from "react-native";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { AREA_META } from "../../src/constants/app";
+import { theme } from "../../src/constants/theme";
 import { GoalCard } from "../../src/components/cards/GoalCard";
+import { EmptyState } from "../../src/components/ui/EmptyState";
 import { Screen } from "../../src/components/ui/Screen";
 import { SectionHeader } from "../../src/components/ui/SectionHeader";
 import { useAppStore } from "../../src/store/useAppStore";
+import { averageProgress, goalsByArea } from "../../src/utils/planning";
+import { TargetAreaId } from "../../src/types/planner";
+
+const AREA_ORDER: TargetAreaId[] = [
+  "financial",
+  "career-business",
+  "skills",
+  "personal-relationship",
+];
 
 export default function GoalsScreen() {
   const goals = useAppStore((state) => state.goals);
+  const [expandedAreas, setExpandedAreas] = useState<Record<TargetAreaId, boolean>>({
+    financial: true,
+    "career-business": true,
+    skills: true,
+    "personal-relationship": true,
+  });
+
+  const toggleArea = (areaId: TargetAreaId) => {
+    setExpandedAreas((current) => ({
+      ...current,
+      [areaId]: !current[areaId],
+    }));
+  };
 
   return (
     <Screen>
       <SectionHeader
         eyebrow="Goals"
         title="Goal library"
-        subtitle="Your goals grouped by target area."
+        subtitle="Expand a target area, scan progress, then tap a goal for details."
       />
 
-      <View style={{ gap: 18 }}>
-        {Object.entries(AREA_META).map(([key, area]) => (
-          <View key={key} style={{ gap: 14 }}>
-            <SectionHeader title={area.label} subtitle={area.description} />
-            <View style={{ gap: 14 }}>
-              {goals
-                .filter((goal) => goal.targetAreaId === key)
-                .map((goal) => (
-                  <GoalCard key={goal.id} goal={goal} />
-                ))}
+      <View style={styles.stack}>
+        {AREA_ORDER.map((areaId) => {
+          const area = AREA_META[areaId];
+          const areaGoals = goalsByArea(goals, areaId);
+          const expanded = expandedAreas[areaId];
+
+          return (
+            <View key={areaId} style={[styles.areaPanel, { borderColor: `${area.color}55` }]}>
+              <Pressable
+                android_ripple={{ color: "rgba(255,255,255,0.06)" }}
+                onPress={() => toggleArea(areaId)}
+                style={styles.areaHeader}
+              >
+                <View style={styles.areaHeaderText}>
+                  <Text style={[styles.areaTitle, { color: area.color }]}>{area.label}</Text>
+                  <Text style={styles.areaDescription}>{area.description}</Text>
+                  <Text style={styles.areaMeta}>
+                    {areaGoals.length} goals - {averageProgress(areaGoals)}% average
+                  </Text>
+                </View>
+                <MaterialCommunityIcons
+                  color={theme.colors.text}
+                  name={expanded ? "chevron-up" : "chevron-down"}
+                  size={24}
+                />
+              </Pressable>
+
+              {expanded ? (
+                <View style={styles.goalStack}>
+                  {areaGoals.length === 0 ? (
+                    <EmptyState
+                      title="No goals in this area"
+                      description="New goals for this target area will appear here."
+                    />
+                  ) : (
+                    areaGoals.map((goal) => <GoalCard key={goal.id} goal={goal} />)
+                  )}
+                </View>
+              ) : null}
             </View>
-          </View>
-        ))}
+          );
+        })}
       </View>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  stack: {
+    gap: theme.spacing.md,
+  },
+  areaPanel: {
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    backgroundColor: theme.colors.surface,
+    overflow: "hidden",
+  },
+  areaHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: theme.spacing.md,
+    padding: theme.spacing.lg,
+  },
+  areaHeaderText: {
+    flex: 1,
+    gap: 4,
+    minWidth: 0,
+  },
+  areaTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+  },
+  areaDescription: {
+    color: theme.colors.muted,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  areaMeta: {
+    color: theme.colors.text,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  goalStack: {
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    gap: theme.spacing.md,
+    padding: theme.spacing.md,
+  },
+});

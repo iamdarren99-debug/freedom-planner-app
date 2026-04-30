@@ -21,6 +21,7 @@ export interface Goal {
   priority: GoalPriority;
   status: GoalStatus;
   progressPercentage: number;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
 }

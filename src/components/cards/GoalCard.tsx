@@ -38,6 +38,10 @@ export function GoalCard({ goal }: GoalCardProps) {
 
       <Text style={styles.title}>{goal.title}</Text>
       <Text style={styles.description}>{goal.description}</Text>
+      <View style={styles.metricBox}>
+        <Text style={styles.metricLabel}>Success metric</Text>
+        <Text style={styles.metricText}>{goal.successMetric}</Text>
+      </View>
 
       <View style={styles.row}>
         <Badge
@@ -96,6 +100,25 @@ const styles = StyleSheet.create({
     color: theme.colors.subtle,
     fontSize: 12,
     fontWeight: "600",
+  },
+  metricBox: {
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.surfaceAlt,
+    padding: theme.spacing.md,
+    gap: 3,
+  },
+  metricLabel: {
+    color: theme.colors.subtle,
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+  },
+  metricText: {
+    color: theme.colors.text,
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 18,
   },
   progressTrack: {
     height: 8,
