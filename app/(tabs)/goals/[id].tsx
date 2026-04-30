@@ -1,21 +1,21 @@
 import { Stack, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { AREA_META } from "../../src/constants/app";
-import { theme } from "../../src/constants/theme";
-import { PrimaryButton } from "../../src/components/forms/PrimaryButton";
-import { TextField } from "../../src/components/forms/TextField";
-import { JournalEntryCard } from "../../src/components/journal/JournalEntryCard";
-import { Badge } from "../../src/components/ui/Badge";
-import { Card } from "../../src/components/ui/Card";
-import { EmptyState } from "../../src/components/ui/EmptyState";
-import { Screen } from "../../src/components/ui/Screen";
-import { SectionHeader } from "../../src/components/ui/SectionHeader";
-import { useAppStore } from "../../src/store/useAppStore";
-import { Goal, GoalPriority, GoalStatus } from "../../src/types/planner";
-import { formatDate, goalStatusLabel } from "../../src/utils/planning";
-import { getJournalEntriesByGoal } from "../../src/utils/selectors";
+import { AREA_META } from "../../../src/constants/app";
+import { theme } from "../../../src/constants/theme";
+import { PrimaryButton } from "../../../src/components/forms/PrimaryButton";
+import { TextField } from "../../../src/components/forms/TextField";
+import { JournalEntryCard } from "../../../src/components/journal/JournalEntryCard";
+import { Badge } from "../../../src/components/ui/Badge";
+import { Card } from "../../../src/components/ui/Card";
+import { EmptyState } from "../../../src/components/ui/EmptyState";
+import { Screen } from "../../../src/components/ui/Screen";
+import { SectionHeader } from "../../../src/components/ui/SectionHeader";
+import { useAppStore } from "../../../src/store/useAppStore";
+import { Goal, GoalPriority, GoalStatus } from "../../../src/types/planner";
+import { formatDate, goalStatusLabel } from "../../../src/utils/planning";
+import { getJournalEntriesByGoal } from "../../../src/utils/selectors";
 
 const PRIORITIES: GoalPriority[] = ["LOW", "MEDIUM", "HIGH"];
 const STATUSES: GoalStatus[] = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "PAUSED"];
@@ -33,6 +33,8 @@ export default function GoalDetailScreen() {
   );
   const updateGoal = useAppStore((state) => state.updateGoal);
   const [editing, setEditing] = useState(false);
+  const [notesExpanded, setNotesExpanded] = useState(false);
+  const [logsExpanded, setLogsExpanded] = useState(false);
 
   if (!goal) {
     return (
@@ -93,21 +95,11 @@ export default function GoalDetailScreen() {
         />
       ) : null}
 
-      <Card style={styles.panel}>
-        <SectionHeader title="Goal details" subtitle="The full target, method, and measure." />
-        <DetailRow label="Target area" value={area.label} />
-        <DetailRow label="Timeline" value={goal.timeline} />
-        <DetailRow label="Success metric" value={goal.successMetric} />
-        <DetailRow label="Priority" value={goal.priority} />
-        <DetailRow label="Status" value={goalStatusLabel(goal.status)} />
-        <DetailRow label="Progress" value={`${goal.progressPercentage}%`} />
-      </Card>
-
       <InfoPanel title="Execution method" items={goal.executionMethod} />
       <InfoPanel title="Weekly actions" items={goal.weeklyActions} />
 
       <Card style={styles.panel}>
-        <SectionHeader title="Linked tasks" subtitle="Tasks connected to this long-term goal." />
+        <SectionHeader title="Linked tasks" />
         {tasks.length === 0 ? (
           <Text style={styles.emptyText}>No linked tasks yet.</Text>
         ) : (
@@ -126,10 +118,7 @@ export default function GoalDetailScreen() {
       </Card>
 
       <Card style={styles.panel}>
-        <SectionHeader
-          title="Linked journal entries"
-          subtitle="Reflections tied back to this goal."
-        />
+        <SectionHeader title="Linked journal entries" />
         {journalEntries.length === 0 ? (
           <Text style={styles.emptyText}>No linked journal entries yet.</Text>
         ) : (
@@ -141,8 +130,11 @@ export default function GoalDetailScreen() {
         )}
       </Card>
 
-      <Card style={styles.panel}>
-        <SectionHeader title="Progress logs" subtitle="History of progress updates." />
+      <TogglePanel
+        expanded={logsExpanded}
+        onToggle={() => setLogsExpanded((value) => !value)}
+        title="Progress logs"
+      >
         {progressLogs.length === 0 ? (
           <Text style={styles.emptyText}>No progress logs yet.</Text>
         ) : (
@@ -156,14 +148,17 @@ export default function GoalDetailScreen() {
             ))}
           </View>
         )}
-      </Card>
+      </TogglePanel>
 
-      <Card style={styles.panel}>
-        <SectionHeader title="Notes" subtitle="Private context for future edits." />
+      <TogglePanel
+        expanded={notesExpanded}
+        onToggle={() => setNotesExpanded((value) => !value)}
+        title="Notes"
+      >
         <Text style={goal.notes ? styles.notesText : styles.emptyText}>
           {goal.notes || "No notes yet."}
         </Text>
-      </Card>
+      </TogglePanel>
     </Screen>
   );
 }
@@ -205,7 +200,7 @@ function GoalEditPanel({
 
   return (
     <Card style={styles.panel}>
-      <SectionHeader title="Edit goal" subtitle="Keep the plan useful, not precious." />
+      <SectionHeader title="Edit goal" />
       <TextField label="Goal title" onChangeText={setTitle} value={title} />
       <TextField
         label="Description"
@@ -288,15 +283,6 @@ function ChoiceGroup<T extends string>({
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.detailRow}>
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue}>{value}</Text>
-    </View>
-  );
-}
-
 function InfoPanel({ items, title }: { items: string[]; title: string }) {
   return (
     <Card style={styles.panel}>
@@ -308,6 +294,28 @@ function InfoPanel({ items, title }: { items: string[]; title: string }) {
           </Text>
         ))}
       </View>
+    </Card>
+  );
+}
+
+function TogglePanel({
+  children,
+  expanded,
+  onToggle,
+  title,
+}: {
+  children: ReactNode;
+  expanded: boolean;
+  onToggle: () => void;
+  title: string;
+}) {
+  return (
+    <Card style={styles.panel}>
+      <Pressable onPress={onToggle} style={styles.toggleRow}>
+        <Text style={styles.toggleTitle}>{title}</Text>
+        <Text style={styles.toggleCaret}>{expanded ? "Hide" : "Show"}</Text>
+      </Pressable>
+      {expanded ? <View style={styles.list}>{children}</View> : null}
     </Card>
   );
 }
@@ -393,24 +401,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "900",
   },
-  detailRow: {
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    gap: 4,
-    paddingBottom: theme.spacing.sm,
+  toggleRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: theme.spacing.md,
   },
-  detailLabel: {
-    color: theme.colors.muted,
-    fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-  },
-  detailValue: {
+  toggleTitle: {
     color: theme.colors.text,
-    fontSize: 15,
-    fontWeight: "800",
-    textTransform: "capitalize",
+    fontSize: 16,
+    fontWeight: "900",
+  },
+  toggleCaret: {
+    color: theme.colors.primary,
+    fontSize: 12,
+    fontWeight: "900",
+    textTransform: "uppercase",
   },
   linkedCard: {
     borderRadius: theme.radius.sm,

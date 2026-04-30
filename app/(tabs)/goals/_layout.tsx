@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 
-import { theme } from "../../src/constants/theme";
+import { theme } from "../../../src/constants/theme";
+import { SettingsHeaderButton } from "../../../src/components/ui/SettingsHeaderButton";
 
 export default function GoalsLayout() {
   return (
@@ -18,9 +19,10 @@ export default function GoalsLayout() {
           fontSize: 18,
           fontWeight: "700",
         },
+        headerRight: () => <SettingsHeaderButton />,
       }}
     >
-      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="index" options={{ title: "Goals" }} />
       <Stack.Screen name="[id]" options={{ title: "Goal Details" }} />
     </Stack>
   );

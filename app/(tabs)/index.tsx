@@ -3,37 +3,19 @@ import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { AREA_META } from "../src/constants/app";
-import { theme } from "../src/constants/theme";
-import { EmptyState } from "../src/components/ui/EmptyState";
-import { Card } from "../src/components/ui/Card";
-import { Screen } from "../src/components/ui/Screen";
-import { SectionHeader } from "../src/components/ui/SectionHeader";
-import { useAppStore } from "../src/store/useAppStore";
-import {
-  averageProgress,
-  formatDate,
-  getDateKey,
-  goalsByArea,
-  priorityRank,
-} from "../src/utils/planning";
-import {
-  Goal,
-  MindsetReminder,
-  MindsetReminderCategory,
-  TargetAreaId,
-  Task,
-} from "../src/types/planner";
+import { AREA_META } from "../../src/constants/app";
+import { theme } from "../../src/constants/theme";
+import { EmptyState } from "../../src/components/ui/EmptyState";
+import { Card } from "../../src/components/ui/Card";
+import { Screen } from "../../src/components/ui/Screen";
+import { SectionHeader } from "../../src/components/ui/SectionHeader";
+import { useAppStore } from "../../src/store/useAppStore";
+import { formatDate, getDateKey, priorityRank } from "../../src/utils/planning";
+import { Goal, MindsetReminder, Task } from "../../src/types/planner";
 
 const MOTIVATIONAL_LINE = "Focus today. Build daily. Win tomorrow.";
-const AREA_ORDER: TargetAreaId[] = [
-  "financial",
-  "career-business",
-  "skills",
-  "personal-relationship",
-];
 
-type ExpandableKey = "weekly" | "thirtyDay" | MindsetReminderCategory;
+type ExpandableKey = "weekly" | "thirtyDay" | "mindset";
 
 export default function DashboardScreen() {
   const goals = useAppStore((state) => state.goals);
@@ -47,12 +29,11 @@ export default function DashboardScreen() {
   const [expandedCards, setExpandedCards] = useState<Record<ExpandableKey, boolean>>({
     weekly: false,
     thirtyDay: false,
-    STOP: false,
-    TRUTH: false,
-    LONG_TERM_VISION: false,
+    mindset: false,
   });
 
   const todayKey = getDateKey();
+  const focusLimit = Math.min(appSettings.dailyFocusLimit, 3);
   const todayTasks = useMemo(
     () =>
       tasks
@@ -65,9 +46,13 @@ export default function DashboardScreen() {
 
           return a.createdAt.localeCompare(b.createdAt) || a.title.localeCompare(b.title);
         })
-        .slice(0, appSettings.dailyFocusLimit),
-    [appSettings.dailyFocusLimit, tasks, todayKey],
+        .slice(0, focusLimit),
+    [focusLimit, tasks, todayKey],
   );
+  const dailyReminder =
+    mindsetReminders[
+      parseInt(todayKey.slice(-2), 10) % Math.max(mindsetReminders.length, 1)
+    ];
 
   const toggleExpanded = (key: ExpandableKey) => {
     setExpandedCards((current) => ({
@@ -78,15 +63,13 @@ export default function DashboardScreen() {
 
   return (
     <Screen>
-      <GreetingCard />
+      <Text style={styles.dailyLine}>
+        {formatDate(todayKey)} - {MOTIVATIONAL_LINE}
+      </Text>
 
       <View style={styles.sectionBlock}>
         <View style={styles.sectionHeaderRow}>
-          <SectionHeader
-            eyebrow="Today"
-            title="Today's Focus"
-            subtitle="Keep the main thing visible. Three moves is enough."
-          />
+          <SectionHeader title="Today's Focus" />
           <Link href="/planner" asChild>
             <Pressable style={styles.textLink}>
               <Text style={styles.textLinkLabel}>Planner</Text>
@@ -119,36 +102,11 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-      <View style={styles.sectionBlock}>
-        <SectionHeader
-          eyebrow="Progress"
-          title="Progress Overview"
-          subtitle="Each pillar gets its own signal, not a noisy scoreboard."
-        />
-        <View style={styles.stack}>
-          {AREA_ORDER.map((areaId) => {
-            const area = AREA_META[areaId];
-            const areaGoals = goalsByArea(goals, areaId);
-
-            return (
-              <ProgressAreaCard
-                key={areaId}
-                color={area.color}
-                goalCount={areaGoals.length}
-                progress={averageProgress(areaGoals)}
-                title={area.label}
-              />
-            );
-          })}
-        </View>
-      </View>
-
       <ExpandableCard
         accentColor={theme.colors.primary}
         expanded={expandedCards.weekly}
         eyebrow="Operating rhythm"
         onToggle={() => toggleExpanded("weekly")}
-        subtitle="Morning, night, off-day structure, and daily habits."
         title="Weekly System"
       >
         <RoutineSection title="Morning routine" items={weeklySystem.weekdayMorning} />
@@ -162,7 +120,6 @@ export default function DashboardScreen() {
         expanded={expandedCards.thirtyDay}
         eyebrow="Execution sprint"
         onToggle={() => toggleExpanded("thirtyDay")}
-        subtitle="The short sprint that turns the plan into proof."
         title="30-Day Action Plan"
       >
         <RoutineSection title="Week 1-2" items={thirtyDayPlan.week1To2} />
@@ -171,50 +128,15 @@ export default function DashboardScreen() {
         <RoutineSection title="Goal" items={thirtyDayPlan.finalGoal} />
       </ExpandableCard>
 
-      <View style={styles.sectionBlock}>
-        <SectionHeader
-          eyebrow="Mindset"
-          title="Mindset Cards"
-          subtitle="A few sharp reminders, expanded only when you need them."
+      {dailyReminder ? (
+        <MindsetCard
+          accentColor={mindsetAccentColor(dailyReminder)}
+          expanded={expandedCards.mindset}
+          onToggle={() => toggleExpanded("mindset")}
+          reminder={dailyReminder}
         />
-        <View style={styles.stack}>
-          <MindsetCard
-            accentColor={theme.colors.danger}
-            expanded={expandedCards.STOP}
-            onToggle={() => toggleExpanded("STOP")}
-            reminders={mindsetReminders.filter((reminder) => reminder.category === "STOP")}
-            title="What to stop"
-          />
-          <MindsetCard
-            accentColor={theme.colors.success}
-            expanded={expandedCards.TRUTH}
-            onToggle={() => toggleExpanded("TRUTH")}
-            reminders={mindsetReminders.filter((reminder) => reminder.category === "TRUTH")}
-            title="The truth"
-          />
-          <MindsetCard
-            accentColor={theme.colors.primary}
-            expanded={expandedCards.LONG_TERM_VISION}
-            onToggle={() => toggleExpanded("LONG_TERM_VISION")}
-            reminders={mindsetReminders.filter(
-              (reminder) => reminder.category === "LONG_TERM_VISION",
-            )}
-            title="Long-term vision"
-          />
-        </View>
-      </View>
+      ) : null}
     </Screen>
-  );
-}
-
-function GreetingCard() {
-  return (
-    <Card padding="xl" radius="lg" style={styles.hero} tone="highlight">
-      <View style={styles.heroGlow} />
-      <Text style={styles.eyebrow}>Command center</Text>
-      <Text style={styles.heroDate}>{formatDate(getDateKey())}</Text>
-      <Text style={styles.heroTitle}>{MOTIVATIONAL_LINE}</Text>
-    </Card>
   );
 }
 
@@ -257,41 +179,12 @@ function TodayTaskCard({
   );
 }
 
-function ProgressAreaCard({
-  color,
-  goalCount,
-  progress,
-  title,
-}: {
-  color: string;
-  goalCount: number;
-  progress: number;
-  title: string;
-}) {
-  return (
-    <Card style={styles.progressCard}>
-      <View style={styles.progressHeader}>
-        <View style={styles.progressTitleRow}>
-          <View style={[styles.progressDot, { backgroundColor: color }]} />
-          <Text style={styles.progressTitle}>{title}</Text>
-        </View>
-        <Text style={styles.progressValue}>{progress}%</Text>
-      </View>
-      <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: color }]} />
-      </View>
-      <Text style={styles.progressMeta}>{goalCount} linked goals</Text>
-    </Card>
-  );
-}
-
 function ExpandableCard({
   accentColor,
   children,
   expanded,
   eyebrow,
   onToggle,
-  subtitle,
   title,
 }: {
   accentColor: string;
@@ -299,7 +192,6 @@ function ExpandableCard({
   expanded: boolean;
   eyebrow: string;
   onToggle: () => void;
-  subtitle: string;
   title: string;
 }) {
   return (
@@ -308,7 +200,6 @@ function ExpandableCard({
         <View style={styles.expandableText}>
           <Text style={[styles.expandableEyebrow, { color: accentColor }]}>{eyebrow}</Text>
           <Text style={styles.expandableTitle}>{title}</Text>
-          <Text style={styles.expandableSubtitle}>{subtitle}</Text>
         </View>
         <MaterialCommunityIcons
           color={theme.colors.text}
@@ -338,68 +229,43 @@ function MindsetCard({
   accentColor,
   expanded,
   onToggle,
-  reminders,
-  title,
+  reminder,
 }: {
   accentColor: string;
   expanded: boolean;
   onToggle: () => void;
-  reminders: MindsetReminder[];
-  title: string;
+  reminder: MindsetReminder;
 }) {
-  const preview = reminders[0];
-
   return (
     <ExpandableCard
       accentColor={accentColor}
       expanded={expanded}
-      eyebrow={`${reminders.length} reminders`}
+      eyebrow={reminder.category.replaceAll("_", " ")}
       onToggle={onToggle}
-      subtitle={preview?.description ?? "No reminders yet."}
-      title={title}
+      title={reminder.title}
     >
-      {reminders.map((reminder) => (
-        <View key={reminder.id} style={styles.mindsetItem}>
-          <Text style={styles.mindsetTitle}>{reminder.title}</Text>
-          <Text style={styles.mindsetDescription}>{reminder.description}</Text>
-        </View>
-      ))}
+      <Text style={styles.mindsetDescription}>{reminder.description}</Text>
     </ExpandableCard>
   );
 }
 
+function mindsetAccentColor(reminder: MindsetReminder) {
+  if (reminder.category === "STOP") {
+    return theme.colors.danger;
+  }
+
+  if (reminder.category === "TRUTH") {
+    return theme.colors.success;
+  }
+
+  return theme.colors.primary;
+}
+
 const styles = StyleSheet.create({
-  hero: {
-    position: "relative",
-    overflow: "hidden",
-    gap: theme.spacing.sm,
-  },
-  heroGlow: {
-    position: "absolute",
-    top: -70,
-    right: -50,
-    width: 160,
-    height: 160,
-    borderRadius: 999,
-    backgroundColor: theme.alpha.primary16,
-  },
-  eyebrow: {
-    color: theme.colors.primary,
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-  },
-  heroDate: {
+  dailyLine: {
     color: theme.colors.muted,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
-  },
-  heroTitle: {
-    color: theme.colors.text,
-    fontSize: 30,
-    fontWeight: "900",
-    lineHeight: 36,
   },
   sectionBlock: {
     gap: theme.spacing.md,
@@ -468,53 +334,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: 38,
   },
-  progressCard: {
-    gap: theme.spacing.sm,
-  },
-  progressHeader: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: theme.spacing.md,
-  },
-  progressTitleRow: {
-    alignItems: "center",
-    flex: 1,
-    flexDirection: "row",
-    gap: theme.spacing.sm,
-    minWidth: 0,
-  },
-  progressDot: {
-    borderRadius: 999,
-    height: 10,
-    width: 10,
-  },
-  progressTitle: {
-    color: theme.colors.text,
-    flex: 1,
-    fontSize: 16,
-    fontWeight: "800",
-  },
-  progressValue: {
-    color: theme.colors.text,
-    fontSize: 18,
-    fontWeight: "900",
-  },
-  progressTrack: {
-    backgroundColor: theme.colors.surfaceAlt,
-    borderRadius: 999,
-    height: 10,
-    overflow: "hidden",
-  },
-  progressFill: {
-    borderRadius: 999,
-    height: "100%",
-  },
-  progressMeta: {
-    color: theme.colors.muted,
-    fontSize: 12,
-    fontWeight: "700",
-  },
   expandableCard: {
     gap: theme.spacing.md,
   },
@@ -539,11 +358,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "900",
   },
-  expandableSubtitle: {
-    color: theme.colors.muted,
-    fontSize: 13,
-    lineHeight: 19,
-  },
   expandableBody: {
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
@@ -562,14 +376,6 @@ const styles = StyleSheet.create({
     color: theme.colors.muted,
     fontSize: 13,
     lineHeight: 19,
-  },
-  mindsetItem: {
-    gap: 4,
-  },
-  mindsetTitle: {
-    color: theme.colors.text,
-    fontSize: 14,
-    fontWeight: "900",
   },
   mindsetDescription: {
     color: theme.colors.muted,

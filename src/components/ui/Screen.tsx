@@ -19,7 +19,7 @@ interface ScreenProps extends Pick<ScrollViewProps, "refreshControl"> {
 
 export function Screen({ children, contentStyle, refreshControl, scrollRef }: ScreenProps) {
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <SafeAreaView style={styles.safeArea} edges={[]}>
       <ScrollView
         contentContainerStyle={[styles.content, contentStyle]}
         ref={scrollRef}

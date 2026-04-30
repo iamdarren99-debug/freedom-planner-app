@@ -53,7 +53,6 @@ export function TaskEditor({
       <SectionHeader
         eyebrow="Task editor"
         title={mode === "edit" ? "Edit task" : "Add task"}
-        subtitle="Keep it specific enough to execute tonight."
       />
       <TextField
         label="Task title"

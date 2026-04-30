@@ -1,20 +1,23 @@
 import { useMemo, useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import {
   createEmptyJournalForm,
   JournalEditor,
   JournalFormState,
-} from "../../src/components/journal/JournalEditor";
-import { JournalEntryCard } from "../../src/components/journal/JournalEntryCard";
-import { JournalFilters } from "../../src/components/journal/JournalFilters";
-import { EmptyState } from "../../src/components/ui/EmptyState";
-import { Screen } from "../../src/components/ui/Screen";
-import { SectionHeader } from "../../src/components/ui/SectionHeader";
-import { theme } from "../../src/constants/theme";
-import { useAppStore } from "../../src/store/useAppStore";
-import { getDateKey, formatDate } from "../../src/utils/planning";
-import { filterJournalEntries, getTasksByDate } from "../../src/utils/selectors";
+} from "../../../src/components/journal/JournalEditor";
+import { JournalEntryCard } from "../../../src/components/journal/JournalEntryCard";
+import { JournalFilters } from "../../../src/components/journal/JournalFilters";
+import { ChoiceChip } from "../../../src/components/forms/ChoiceChip";
+import { Card } from "../../../src/components/ui/Card";
+import { EmptyState } from "../../../src/components/ui/EmptyState";
+import { Screen } from "../../../src/components/ui/Screen";
+import { SectionHeader } from "../../../src/components/ui/SectionHeader";
+import { JOURNAL_PROMPTS } from "../../../src/constants/journal";
+import { theme } from "../../../src/constants/theme";
+import { useAppStore } from "../../../src/store/useAppStore";
+import { getDateKey, formatDate } from "../../../src/utils/planning";
+import { filterJournalEntries, getTasksByDate } from "../../../src/utils/selectors";
 
 export default function JournalScreen() {
   const goals = useAppStore((state) => state.goals);
@@ -27,6 +30,7 @@ export default function JournalScreen() {
   const [showAllDates, setShowAllDates] = useState(false);
   const [query, setQuery] = useState("");
   const [form, setForm] = useState<JournalFormState>(createEmptyJournalForm);
+  const [editorVisible, setEditorVisible] = useState(false);
 
   const dayTasks = useMemo(
     () => getTasksByDate({ tasks }, selectedDate),
@@ -61,6 +65,15 @@ export default function JournalScreen() {
       progressReflection: form.progressReflection.trim() || undefined,
     });
     setForm(createEmptyJournalForm());
+    setEditorVisible(false);
+  };
+
+  const startWithPrompt = (prompt: string) => {
+    setForm({
+      ...createEmptyJournalForm(),
+      content: `${prompt}\n`,
+    });
+    setEditorVisible(true);
   };
 
   return (
@@ -69,27 +82,42 @@ export default function JournalScreen() {
       style={styles.keyboardAvoidingView}
     >
       <Screen>
-        <SectionHeader
-          eyebrow="Journal"
-          title="Notes, diary, and progress reflection"
-          subtitle="Connect what happened today to tasks, goals, and the bigger freedom plan."
-        />
+        <Card style={styles.writeCard}>
+          <Pressable
+            onPress={() => setEditorVisible((value) => !value)}
+            style={styles.writeButton}
+          >
+            <Text style={styles.writeButtonText}>
+              {editorVisible ? "Hide editor" : "+ Write entry"}
+            </Text>
+          </Pressable>
+          {!editorVisible ? (
+            <View style={styles.promptRow}>
+              {JOURNAL_PROMPTS.slice(0, 3).map((prompt) => (
+                <ChoiceChip
+                  active={false}
+                  key={prompt}
+                  label={prompt}
+                  onPress={() => startWithPrompt(prompt)}
+                />
+              ))}
+            </View>
+          ) : null}
+        </Card>
 
-        <JournalEditor
-          dateLabel={formatDate(selectedDate)}
-          form={form}
-          goals={goals}
-          onChange={setForm}
-          onSave={saveEntry}
-          tasks={dayTasks}
-        />
+        {editorVisible ? (
+          <JournalEditor
+            dateLabel={formatDate(selectedDate)}
+            form={form}
+            goals={goals}
+            onChange={setForm}
+            onSave={saveEntry}
+            tasks={dayTasks}
+          />
+        ) : null}
 
         <View style={styles.sectionBlock}>
-          <SectionHeader
-            eyebrow="Review"
-            title="Find entries"
-            subtitle="Filter by day, linked goal, or any words you remember."
-          />
+          <SectionHeader title="Find entries" />
           <JournalFilters
             date={selectedDate}
             goals={goals}
@@ -107,11 +135,6 @@ export default function JournalScreen() {
         <View style={styles.sectionBlock}>
           <SectionHeader
             title={`${filteredEntries.length} entries`}
-            subtitle={
-              showAllDates
-                ? "Showing reflections across all saved dates."
-                : `Showing reflections for ${formatDate(selectedDate)}.`
-            }
           />
           <View style={styles.stack}>
             {filteredEntries.length === 0 ? (
@@ -131,11 +154,6 @@ export default function JournalScreen() {
             )}
           </View>
         </View>
-
-        <Text style={styles.footerNote}>
-          Use journal entries for day notes, task notes, goal notes, total progress, or honest
-          diary reflections.
-        </Text>
       </Screen>
     </KeyboardAvoidingView>
   );
@@ -148,13 +166,28 @@ const styles = StyleSheet.create({
   sectionBlock: {
     gap: theme.spacing.md,
   },
-  stack: {
+  writeCard: {
     gap: theme.spacing.md,
   },
-  footerNote: {
-    color: theme.colors.subtle,
-    fontSize: 12,
-    lineHeight: 18,
-    textAlign: "center",
+  writeButton: {
+    alignItems: "center",
+    borderRadius: 999,
+    backgroundColor: theme.colors.primary,
+    minHeight: 48,
+    justifyContent: "center",
+    paddingHorizontal: theme.spacing.lg,
+  },
+  writeButtonText: {
+    color: theme.colors.background,
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  promptRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing.sm,
+  },
+  stack: {
+    gap: theme.spacing.md,
   },
 });

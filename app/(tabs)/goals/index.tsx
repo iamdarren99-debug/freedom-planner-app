@@ -2,16 +2,16 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { AREA_META } from "../../src/constants/app";
-import { theme } from "../../src/constants/theme";
-import { GoalCard } from "../../src/components/cards/GoalCard";
-import { EmptyState } from "../../src/components/ui/EmptyState";
-import { Card } from "../../src/components/ui/Card";
-import { Screen } from "../../src/components/ui/Screen";
-import { SectionHeader } from "../../src/components/ui/SectionHeader";
-import { useAppStore } from "../../src/store/useAppStore";
-import { averageProgress, goalsByArea } from "../../src/utils/planning";
-import { TargetAreaId } from "../../src/types/planner";
+import { AREA_META } from "../../../src/constants/app";
+import { theme } from "../../../src/constants/theme";
+import { GoalCard } from "../../../src/components/cards/GoalCard";
+import { EmptyState } from "../../../src/components/ui/EmptyState";
+import { Card } from "../../../src/components/ui/Card";
+import { Screen } from "../../../src/components/ui/Screen";
+import { SectionHeader } from "../../../src/components/ui/SectionHeader";
+import { useAppStore } from "../../../src/store/useAppStore";
+import { averageProgress, goalsByArea } from "../../../src/utils/planning";
+import { TargetAreaId } from "../../../src/types/planner";
 
 const AREA_ORDER: TargetAreaId[] = [
   "financial",
@@ -39,9 +39,7 @@ export default function GoalsScreen() {
   return (
     <Screen>
       <SectionHeader
-        eyebrow="Goals"
         title="Goal library"
-        subtitle="Expand a target area, scan progress, then tap a goal for details."
       />
 
       <View style={styles.stack}>

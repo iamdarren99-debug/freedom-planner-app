@@ -1,12 +1,12 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { AREA_META } from "../../src/constants/app";
-import { theme } from "../../src/constants/theme";
-import { useAppStore } from "../../src/store/useAppStore";
-import { averageProgress, formatDate, goalsByArea } from "../../src/utils/planning";
-import { Screen } from "../../src/components/ui/Screen";
-import { SectionHeader } from "../../src/components/ui/SectionHeader";
-import { Card } from "../../src/components/ui/Card";
+import { AREA_META } from "../../../src/constants/app";
+import { theme } from "../../../src/constants/theme";
+import { useAppStore } from "../../../src/store/useAppStore";
+import { averageProgress, formatDate, goalsByArea } from "../../../src/utils/planning";
+import { Screen } from "../../../src/components/ui/Screen";
+import { SectionHeader } from "../../../src/components/ui/SectionHeader";
+import { Card } from "../../../src/components/ui/Card";
 
 export default function ProgressScreen() {
   const goals = useAppStore((state) => state.goals);
@@ -14,11 +14,7 @@ export default function ProgressScreen() {
 
   return (
     <Screen>
-      <SectionHeader
-        eyebrow="Progress"
-        title="Progress overview"
-        subtitle="Daily focus completions roll up into goal progress."
-      />
+      <SectionHeader title="Progress overview" />
 
       <Card style={styles.summaryCard}>
         <Text style={styles.summaryLabel}>Overall average</Text>
@@ -48,7 +44,7 @@ export default function ProgressScreen() {
         })}
       </View>
 
-      <SectionHeader title="Recent progress logs" subtitle="The latest updates from daily action." />
+      <SectionHeader title="Recent progress logs" />
       <View style={styles.stack}>
         {progressLogs.slice(0, 5).map((log) => {
           const goal = goals.find((item) => item.id === log.goalId);

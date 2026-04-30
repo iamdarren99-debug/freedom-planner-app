@@ -1,12 +1,12 @@
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { APP_NAME } from "../../src/constants/app";
-import { theme } from "../../src/constants/theme";
-import { useAppStore } from "../../src/store/useAppStore";
-import { Screen } from "../../src/components/ui/Screen";
-import { SectionHeader } from "../../src/components/ui/SectionHeader";
-import { PrimaryButton } from "../../src/components/forms/PrimaryButton";
-import { Card } from "../../src/components/ui/Card";
+import { APP_NAME } from "../src/constants/app";
+import { theme } from "../src/constants/theme";
+import { useAppStore } from "../src/store/useAppStore";
+import { Screen } from "../src/components/ui/Screen";
+import { SectionHeader } from "../src/components/ui/SectionHeader";
+import { PrimaryButton } from "../src/components/forms/PrimaryButton";
+import { Card } from "../src/components/ui/Card";
 
 export default function SettingsScreen() {
   const appSettings = useAppStore((state) => state.appSettings);
@@ -14,7 +14,7 @@ export default function SettingsScreen() {
   const resetToSeedData = useAppStore((state) => state.resetToSeedData);
   const updateDailyFocusLimit = (delta: number) => {
     updateAppSettings({
-      dailyFocusLimit: Math.min(8, Math.max(1, appSettings.dailyFocusLimit + delta)),
+      dailyFocusLimit: Math.min(5, Math.max(1, appSettings.dailyFocusLimit + delta)),
     });
   };
 
@@ -32,9 +32,7 @@ export default function SettingsScreen() {
   return (
     <Screen>
       <SectionHeader
-        eyebrow="Settings"
         title="App settings"
-        subtitle="Local controls for the Android-first planner."
       />
 
       <Card style={styles.card}>
@@ -51,11 +49,6 @@ export default function SettingsScreen() {
             <Text style={styles.stepperButtonText}>+</Text>
           </Pressable>
         </View>
-      </Card>
-
-      <Card style={styles.card}>
-        <Text style={styles.label}>Storage mode</Text>
-        <Text style={styles.value}>Local-first with AsyncStorage</Text>
       </Card>
 
       <Card style={styles.card}>
