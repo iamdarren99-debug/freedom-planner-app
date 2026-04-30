@@ -49,7 +49,7 @@ export function TaskEditor({
   };
 
   return (
-    <Card style={styles.editorCard} tone="highlight">
+    <Card style={styles.editorCard}>
       <SectionHeader
         eyebrow="Task editor"
         title={mode === "edit" ? "Edit task" : "Add task"}

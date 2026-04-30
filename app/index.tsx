@@ -209,7 +209,7 @@ export default function DashboardScreen() {
 
 function GreetingCard() {
   return (
-    <Card style={styles.hero} tone="highlight">
+    <Card padding="xl" radius="lg" style={styles.hero} tone="highlight">
       <View style={styles.heroGlow} />
       <Text style={styles.eyebrow}>Command center</Text>
       <Text style={styles.heroDate}>{formatDate(getDateKey())}</Text>

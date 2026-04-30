@@ -47,7 +47,7 @@ export default function GoalDetailScreen() {
   return (
     <Screen>
       <Stack.Screen options={{ title: goal.title }} />
-      <Card style={styles.hero}>
+      <Card padding="xl" radius="lg" style={styles.hero}>
         <Text style={[styles.area, { color: area.color }]}>{area.label}</Text>
         <Text style={styles.title}>{goal.title}</Text>
         <Text style={styles.description}>{goal.description}</Text>

@@ -51,7 +51,11 @@ export default function GoalsScreen() {
           const expanded = expandedAreas[areaId];
 
           return (
-            <Card key={areaId} style={[styles.areaPanel, { borderColor: `${area.color}55` }]}>
+            <Card
+              key={areaId}
+              radius="lg"
+              style={[styles.areaPanel, { borderColor: `${area.color}55` }]}
+            >
               <Pressable
                 android_ripple={{ color: theme.alpha.white06 }}
                 onPress={() => toggleArea(areaId)}

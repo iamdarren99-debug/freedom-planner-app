@@ -389,13 +389,16 @@ export const useAppStore = create<AppStore>()(
             now.toISOString(),
           ),
           progressLogs:
-            nextStatus === "DONE" && nextProgress !== goal.progressPercentage
+            nextProgress !== goal.progressPercentage
               ? upsertProgressLog(current.progressLogs, {
                   id: createId("progress"),
                   goalId: task.goalId as string,
                   date: getDateKey(now),
                   value: nextProgress,
-                  note: `Completed task: ${task.title}`,
+                  note:
+                    nextStatus === "DONE"
+                      ? `Completed task: ${task.title}`
+                      : `Undid task: ${task.title}`,
                 })
               : current.progressLogs,
         }));
@@ -414,6 +417,32 @@ export const useAppStore = create<AppStore>()(
           : undefined;
         const nextStatus = task.status === "SKIPPED" ? "TODO" : "SKIPPED";
         const wasDone = task.status === "DONE";
+
+        if (wasDone && task.goalId && goal && isWeeklyActionTask(goal, task)) {
+          const alreadyComplete = isFocusItemComplete(
+            state.dailyCompletions[getDateKey(now)] ?? [],
+            task.goalId,
+            task.title,
+          );
+
+          if (alreadyComplete) {
+            get().toggleFocusItem(task.goalId, task.title);
+          }
+
+          set((current) => ({
+            tasks: current.tasks.map((task) =>
+              task.id === id
+                ? {
+                    ...task,
+                    status: "SKIPPED",
+                    notes: notes ?? task.notes,
+                    updatedAt: now.toISOString(),
+                  }
+                : task,
+            ),
+          }));
+          return;
+        }
 
         set((current) => {
           const nextState: Partial<AppStore> = {
@@ -440,18 +469,6 @@ export const useAppStore = create<AppStore>()(
 
           return nextState;
         });
-
-        if (wasDone && task.goalId && goal && isWeeklyActionTask(goal, task)) {
-          const alreadyComplete = isFocusItemComplete(
-            state.dailyCompletions[getDateKey(now)] ?? [],
-            task.goalId,
-            task.title,
-          );
-
-          if (alreadyComplete) {
-            get().toggleFocusItem(task.goalId, task.title);
-          }
-        }
       },
       deleteTask: (id) =>
         set((state) => ({
@@ -548,6 +565,15 @@ export const useAppStore = create<AppStore>()(
                       : `Completed daily focus: ${item}`,
                   })
                 : state.progressLogs,
+            tasks: state.tasks.map((task) =>
+              task.goalId === goalId && task.date === todayKey && task.title === item
+                ? {
+                    ...task,
+                    status: alreadyComplete ? "TODO" : "DONE",
+                    updatedAt: now.toISOString(),
+                  }
+                : task,
+            ),
             dailyCompletions: {
               ...state.dailyCompletions,
               [todayKey]: alreadyComplete
