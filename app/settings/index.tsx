@@ -1,4 +1,4 @@
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { APP_NAME } from "../../src/constants/app";
 import { theme } from "../../src/constants/theme";
@@ -6,10 +6,17 @@ import { useAppStore } from "../../src/store/useAppStore";
 import { Screen } from "../../src/components/ui/Screen";
 import { SectionHeader } from "../../src/components/ui/SectionHeader";
 import { PrimaryButton } from "../../src/components/forms/PrimaryButton";
+import { Card } from "../../src/components/ui/Card";
 
 export default function SettingsScreen() {
   const appSettings = useAppStore((state) => state.appSettings);
+  const updateAppSettings = useAppStore((state) => state.updateAppSettings);
   const resetToSeedData = useAppStore((state) => state.resetToSeedData);
+  const updateDailyFocusLimit = (delta: number) => {
+    updateAppSettings({
+      dailyFocusLimit: Math.min(8, Math.max(1, appSettings.dailyFocusLimit + delta)),
+    });
+  };
 
   const confirmReset = () => {
     Alert.alert(
@@ -30,25 +37,31 @@ export default function SettingsScreen() {
         subtitle="Local controls for the Android-first planner."
       />
 
-      <View style={styles.card}>
-        <Text style={styles.label}>Theme</Text>
-        <Text style={styles.value}>{appSettings.themeMode}</Text>
-      </View>
-
-      <View style={styles.card}>
+      <Card style={styles.card}>
         <Text style={styles.label}>Daily focus limit</Text>
-        <Text style={styles.value}>{appSettings.dailyFocusLimit} actions</Text>
-      </View>
+        <View style={styles.stepperRow}>
+          <Pressable
+            onPress={() => updateDailyFocusLimit(-1)}
+            style={styles.stepperButton}
+          >
+            <Text style={styles.stepperButtonText}>-</Text>
+          </Pressable>
+          <Text style={styles.value}>{appSettings.dailyFocusLimit} actions</Text>
+          <Pressable onPress={() => updateDailyFocusLimit(1)} style={styles.stepperButton}>
+            <Text style={styles.stepperButtonText}>+</Text>
+          </Pressable>
+        </View>
+      </Card>
 
-      <View style={styles.card}>
+      <Card style={styles.card}>
         <Text style={styles.label}>Storage mode</Text>
         <Text style={styles.value}>Local-first with AsyncStorage</Text>
-      </View>
+      </Card>
 
-      <View style={styles.card}>
+      <Card style={styles.card}>
         <Text style={styles.label}>App name</Text>
         <Text style={styles.value}>{APP_NAME}</Text>
-      </View>
+      </Card>
 
       <PrimaryButton label="Reset to seed data" onPress={confirmReset} />
     </Screen>
@@ -57,11 +70,6 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
     gap: theme.spacing.xs,
   },
   label: {
@@ -73,5 +81,26 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontSize: 16,
     fontWeight: "700",
+  },
+  stepperRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: theme.spacing.md,
+  },
+  stepperButton: {
+    alignItems: "center",
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceAlt,
+    height: 40,
+    justifyContent: "center",
+    width: 40,
+  },
+  stepperButtonText: {
+    color: theme.colors.text,
+    fontSize: 20,
+    fontWeight: "800",
   },
 });

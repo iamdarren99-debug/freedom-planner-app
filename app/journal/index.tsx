@@ -9,6 +9,7 @@ import { SectionHeader } from "../../src/components/ui/SectionHeader";
 import { EmptyState } from "../../src/components/ui/EmptyState";
 import { PrimaryButton } from "../../src/components/forms/PrimaryButton";
 import { TextField } from "../../src/components/forms/TextField";
+import { Card } from "../../src/components/ui/Card";
 
 export default function JournalScreen() {
   const journalEntries = useAppStore((state) => state.journalEntries);
@@ -27,7 +28,7 @@ export default function JournalScreen() {
         subtitle="Capture wins, friction, and the next move while it is fresh."
       />
 
-      <View style={styles.panel}>
+      <Card style={styles.panel}>
         <TextField
           label="Entry title"
           onChangeText={setTitle}
@@ -57,7 +58,7 @@ export default function JournalScreen() {
             setContent("");
           }}
         />
-      </View>
+      </Card>
 
       <SectionHeader title="Recent entries" subtitle="Your reflections stay on this device." />
       <View style={styles.stack}>
@@ -68,11 +69,11 @@ export default function JournalScreen() {
           />
         ) : (
           journalEntries.map((entry) => (
-            <View key={entry.id} style={styles.entryCard}>
+            <Card key={entry.id} style={styles.entryCard}>
               <Text style={styles.entryTitle}>{entry.title}</Text>
               <Text style={styles.entryDate}>{formatDate(entry.createdAt)}</Text>
               <Text style={styles.entryContent}>{entry.content}</Text>
-            </View>
+            </Card>
           ))
         )}
       </View>
@@ -82,22 +83,12 @@ export default function JournalScreen() {
 
 const styles = StyleSheet.create({
   panel: {
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
     gap: theme.spacing.md,
   },
   stack: {
     gap: theme.spacing.md,
   },
   entryCard: {
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
     gap: theme.spacing.xs,
   },
   entryTitle: {

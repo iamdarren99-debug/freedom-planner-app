@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import { theme } from "../../constants/theme";
+import { Card } from "./Card";
 
 interface EmptyStateProps {
   title: string;
@@ -9,20 +10,15 @@ interface EmptyStateProps {
 
 export function EmptyState({ title, description }: EmptyStateProps) {
   return (
-    <View style={styles.container}>
+    <Card style={styles.container}>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
-    </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
     gap: theme.spacing.xs,
   },
   title: {

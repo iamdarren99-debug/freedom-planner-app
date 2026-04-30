@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import { theme } from "../../constants/theme";
+import { Card } from "../ui/Card";
 
 interface PlannerCardProps {
   title: string;
@@ -10,7 +11,7 @@ interface PlannerCardProps {
 
 export function PlannerCard({ title, meta, items }: PlannerCardProps) {
   return (
-    <View style={styles.card}>
+    <Card style={styles.card}>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.meta}>{meta}</Text>
       {items.map((item) => (
@@ -18,17 +19,12 @@ export function PlannerCard({ title, meta, items }: PlannerCardProps) {
           - {item}
         </Text>
       ))}
-    </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
     gap: theme.spacing.sm,
   },
   title: {

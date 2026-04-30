@@ -6,6 +6,7 @@ import { AREA_META } from "../../src/constants/app";
 import { theme } from "../../src/constants/theme";
 import { GoalCard } from "../../src/components/cards/GoalCard";
 import { EmptyState } from "../../src/components/ui/EmptyState";
+import { Card } from "../../src/components/ui/Card";
 import { Screen } from "../../src/components/ui/Screen";
 import { SectionHeader } from "../../src/components/ui/SectionHeader";
 import { useAppStore } from "../../src/store/useAppStore";
@@ -50,9 +51,9 @@ export default function GoalsScreen() {
           const expanded = expandedAreas[areaId];
 
           return (
-            <View key={areaId} style={[styles.areaPanel, { borderColor: `${area.color}55` }]}>
+            <Card key={areaId} style={[styles.areaPanel, { borderColor: `${area.color}55` }]}>
               <Pressable
-                android_ripple={{ color: "rgba(255,255,255,0.06)" }}
+                android_ripple={{ color: theme.alpha.white06 }}
                 onPress={() => toggleArea(areaId)}
                 style={styles.areaHeader}
               >
@@ -82,7 +83,7 @@ export default function GoalsScreen() {
                   )}
                 </View>
               ) : null}
-            </View>
+            </Card>
           );
         })}
       </View>
@@ -95,10 +96,8 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
   areaPanel: {
-    borderRadius: theme.radius.lg,
-    borderWidth: 1,
-    backgroundColor: theme.colors.surface,
     overflow: "hidden",
+    padding: 0,
   },
   areaHeader: {
     alignItems: "center",

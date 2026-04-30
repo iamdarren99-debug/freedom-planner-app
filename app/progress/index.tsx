@@ -6,6 +6,7 @@ import { useAppStore } from "../../src/store/useAppStore";
 import { averageProgress, formatDate, goalsByArea } from "../../src/utils/planning";
 import { Screen } from "../../src/components/ui/Screen";
 import { SectionHeader } from "../../src/components/ui/SectionHeader";
+import { Card } from "../../src/components/ui/Card";
 
 export default function ProgressScreen() {
   const goals = useAppStore((state) => state.goals);
@@ -19,10 +20,10 @@ export default function ProgressScreen() {
         subtitle="Daily focus completions roll up into goal progress."
       />
 
-      <View style={styles.summaryCard}>
+      <Card style={styles.summaryCard}>
         <Text style={styles.summaryLabel}>Overall average</Text>
         <Text style={styles.summaryValue}>{averageProgress(goals)}%</Text>
-      </View>
+      </Card>
 
       <View style={styles.stack}>
         {Object.entries(AREA_META).map(([key, area]) => {
@@ -30,7 +31,7 @@ export default function ProgressScreen() {
           const progress = averageProgress(areaGoals);
 
           return (
-            <View key={key} style={styles.areaCard}>
+            <Card key={key} style={styles.areaCard}>
               <Text style={[styles.areaTitle, { color: area.color }]}>{area.label}</Text>
               <Text style={styles.areaDescription}>{area.description}</Text>
               <View style={styles.progressTrack}>
@@ -42,7 +43,7 @@ export default function ProgressScreen() {
                 />
               </View>
               <Text style={styles.progressText}>{progress}% average progress</Text>
-            </View>
+            </Card>
           );
         })}
       </View>
@@ -53,13 +54,13 @@ export default function ProgressScreen() {
           const goal = goals.find((item) => item.id === log.goalId);
 
           return (
-            <View key={log.id} style={styles.logCard}>
+            <Card key={log.id} style={styles.logCard}>
               <Text style={styles.logTitle}>{goal?.title ?? "Goal update"}</Text>
               <Text style={styles.logMeta}>
-                {formatDate(log.date)} · {log.value}%
+                {formatDate(log.date)} - {log.value}%
               </Text>
               {log.note ? <Text style={styles.logNote}>{log.note}</Text> : null}
-            </View>
+            </Card>
           );
         })}
       </View>
@@ -69,10 +70,6 @@ export default function ProgressScreen() {
 
 const styles = StyleSheet.create({
   summaryCard: {
-    borderRadius: theme.radius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
     padding: theme.spacing.xl,
     gap: theme.spacing.xs,
   },
@@ -90,11 +87,6 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
   areaCard: {
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
     gap: theme.spacing.sm,
   },
   areaTitle: {
@@ -122,11 +114,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   logCard: {
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
     gap: theme.spacing.xs,
   },
   logTitle: {

@@ -6,6 +6,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { AREA_META } from "../src/constants/app";
 import { theme } from "../src/constants/theme";
 import { EmptyState } from "../src/components/ui/EmptyState";
+import { Card } from "../src/components/ui/Card";
 import { Screen } from "../src/components/ui/Screen";
 import { SectionHeader } from "../src/components/ui/SectionHeader";
 import { useAppStore } from "../src/store/useAppStore";
@@ -36,6 +37,7 @@ type ExpandableKey = "weekly" | "thirtyDay" | MindsetReminderCategory;
 
 export default function DashboardScreen() {
   const goals = useAppStore((state) => state.goals);
+  const appSettings = useAppStore((state) => state.appSettings);
   const tasks = useAppStore((state) => state.tasks);
   const weeklySystem = useAppStore((state) => state.weeklySystem);
   const thirtyDayPlan = useAppStore((state) => state.thirtyDayPlan);
@@ -63,8 +65,8 @@ export default function DashboardScreen() {
 
           return a.createdAt.localeCompare(b.createdAt) || a.title.localeCompare(b.title);
         })
-        .slice(0, 3),
-    [tasks, todayKey],
+        .slice(0, appSettings.dailyFocusLimit),
+    [appSettings.dailyFocusLimit, tasks, todayKey],
   );
 
   const toggleExpanded = (key: ExpandableKey) => {
@@ -207,12 +209,12 @@ export default function DashboardScreen() {
 
 function GreetingCard() {
   return (
-    <View style={styles.hero}>
+    <Card style={styles.hero} tone="highlight">
       <View style={styles.heroGlow} />
       <Text style={styles.eyebrow}>Command center</Text>
       <Text style={styles.heroDate}>{formatDate(getDateKey())}</Text>
       <Text style={styles.heroTitle}>{MOTIVATIONAL_LINE}</Text>
-    </View>
+    </Card>
   );
 }
 
@@ -231,7 +233,7 @@ function TodayTaskCard({
   const accentColor = area?.color ?? theme.colors.primary;
 
   return (
-    <View style={styles.taskCard}>
+    <Card style={styles.taskCard}>
       <View style={[styles.taskNumber, { borderColor: accentColor }]}>
         <Text style={[styles.taskNumberText, { color: accentColor }]}>{index + 1}</Text>
       </View>
@@ -242,7 +244,7 @@ function TodayTaskCard({
         </Text>
       </View>
       <Pressable
-        android_ripple={{ color: "rgba(255,255,255,0.08)", borderless: false }}
+        android_ripple={{ color: theme.alpha.white08, borderless: false }}
         onPress={onComplete}
         style={({ pressed }) => [
           styles.completeButton,
@@ -251,7 +253,7 @@ function TodayTaskCard({
       >
         <MaterialCommunityIcons color={theme.colors.background} name="check" size={18} />
       </Pressable>
-    </View>
+    </Card>
   );
 }
 
@@ -267,7 +269,7 @@ function ProgressAreaCard({
   title: string;
 }) {
   return (
-    <View style={styles.progressCard}>
+    <Card style={styles.progressCard}>
       <View style={styles.progressHeader}>
         <View style={styles.progressTitleRow}>
           <View style={[styles.progressDot, { backgroundColor: color }]} />
@@ -279,7 +281,7 @@ function ProgressAreaCard({
         <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: color }]} />
       </View>
       <Text style={styles.progressMeta}>{goalCount} linked goals</Text>
-    </View>
+    </Card>
   );
 }
 
@@ -301,7 +303,7 @@ function ExpandableCard({
   title: string;
 }) {
   return (
-    <View style={[styles.expandableCard, { borderColor: `${accentColor}55` }]}>
+    <Card style={[styles.expandableCard, { borderColor: `${accentColor}55` }]}>
       <Pressable onPress={onToggle} style={styles.expandableHeader}>
         <View style={styles.expandableText}>
           <Text style={[styles.expandableEyebrow, { color: accentColor }]}>{eyebrow}</Text>
@@ -315,7 +317,7 @@ function ExpandableCard({
         />
       </Pressable>
       {expanded ? <View style={styles.expandableBody}>{children}</View> : null}
-    </View>
+    </Card>
   );
 }
 
@@ -370,11 +372,6 @@ const styles = StyleSheet.create({
   hero: {
     position: "relative",
     overflow: "hidden",
-    borderRadius: theme.radius.lg,
-    borderWidth: 1,
-    borderColor: "rgba(242,193,78,0.24)",
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.xl,
     gap: theme.spacing.sm,
   },
   heroGlow: {
@@ -384,7 +381,7 @@ const styles = StyleSheet.create({
     width: 160,
     height: 160,
     borderRadius: 999,
-    backgroundColor: "rgba(242,193,78,0.16)",
+    backgroundColor: theme.alpha.primary16,
   },
   eyebrow: {
     color: theme.colors.primary,
@@ -431,10 +428,6 @@ const styles = StyleSheet.create({
   },
   taskCard: {
     alignItems: "center",
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
     flexDirection: "row",
     gap: theme.spacing.md,
     padding: theme.spacing.md,
@@ -476,11 +469,6 @@ const styles = StyleSheet.create({
     width: 38,
   },
   progressCard: {
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
     gap: theme.spacing.sm,
   },
   progressHeader: {
@@ -528,10 +516,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   expandableCard: {
-    borderRadius: theme.radius.lg,
-    borderWidth: 1,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
     gap: theme.spacing.md,
   },
   expandableHeader: {

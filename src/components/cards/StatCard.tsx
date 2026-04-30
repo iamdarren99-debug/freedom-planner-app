@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import { theme } from "../../constants/theme";
+import { Card } from "../ui/Card";
 
 interface StatCardProps {
   label: string;
@@ -10,11 +11,11 @@ interface StatCardProps {
 
 export function StatCard({ label, value, accent }: StatCardProps) {
   return (
-    <View style={styles.card}>
+    <Card style={styles.card}>
       <View style={[styles.dot, { backgroundColor: accent }]} />
       <Text style={styles.value}>{value}</Text>
       <Text style={styles.label}>{label}</Text>
-    </View>
+    </Card>
   );
 }
 
@@ -22,10 +23,6 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     minWidth: 0,
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
     padding: theme.spacing.md,
     gap: theme.spacing.xs,
   },

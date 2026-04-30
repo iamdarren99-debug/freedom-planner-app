@@ -3,8 +3,6 @@ export type GoalPriority = "LOW" | "MEDIUM" | "HIGH";
 export type GoalStatus = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "PAUSED";
 export type TaskStatus = "TODO" | "DONE" | "SKIPPED";
 export type MindsetReminderCategory = "STOP" | "TRUTH" | "LONG_TERM_VISION";
-export type ThemeMode = "dark";
-
 export interface TargetArea {
   id: TargetAreaId;
 }
@@ -93,9 +91,7 @@ export interface DailyCompletion {
 export type DailyCompletionsByDate = Record<string, DailyCompletion[]>;
 
 export interface AppSettings {
-  themeMode: ThemeMode;
   dailyFocusLimit: number;
-  hasCompletedOnboarding: boolean;
   lastResetAt?: string;
 }
 

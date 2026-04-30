@@ -7,6 +7,7 @@ import { theme } from "../../src/constants/theme";
 import { PrimaryButton } from "../../src/components/forms/PrimaryButton";
 import { TextField } from "../../src/components/forms/TextField";
 import { Badge } from "../../src/components/ui/Badge";
+import { Card } from "../../src/components/ui/Card";
 import { EmptyState } from "../../src/components/ui/EmptyState";
 import { Screen } from "../../src/components/ui/Screen";
 import { SectionHeader } from "../../src/components/ui/SectionHeader";
@@ -46,7 +47,7 @@ export default function GoalDetailScreen() {
   return (
     <Screen>
       <Stack.Screen options={{ title: goal.title }} />
-      <View style={styles.hero}>
+      <Card style={styles.hero}>
         <Text style={[styles.area, { color: area.color }]}>{area.label}</Text>
         <Text style={styles.title}>{goal.title}</Text>
         <Text style={styles.description}>{goal.description}</Text>
@@ -76,7 +77,7 @@ export default function GoalDetailScreen() {
         >
           <Text style={styles.editButtonText}>{editing ? "Close editor" : "Edit goal"}</Text>
         </Pressable>
-      </View>
+      </Card>
 
       {editing ? (
         <GoalEditPanel
@@ -89,7 +90,7 @@ export default function GoalDetailScreen() {
         />
       ) : null}
 
-      <View style={styles.panel}>
+      <Card style={styles.panel}>
         <SectionHeader title="Goal details" subtitle="The full target, method, and measure." />
         <DetailRow label="Target area" value={area.label} />
         <DetailRow label="Timeline" value={goal.timeline} />
@@ -97,12 +98,12 @@ export default function GoalDetailScreen() {
         <DetailRow label="Priority" value={goal.priority} />
         <DetailRow label="Status" value={goalStatusLabel(goal.status)} />
         <DetailRow label="Progress" value={`${goal.progressPercentage}%`} />
-      </View>
+      </Card>
 
       <InfoPanel title="Execution method" items={goal.executionMethod} />
       <InfoPanel title="Weekly actions" items={goal.weeklyActions} />
 
-      <View style={styles.panel}>
+      <Card style={styles.panel}>
         <SectionHeader title="Linked tasks" subtitle="Tasks connected to this long-term goal." />
         {tasks.length === 0 ? (
           <Text style={styles.emptyText}>No linked tasks yet.</Text>
@@ -119,9 +120,9 @@ export default function GoalDetailScreen() {
             ))}
           </View>
         )}
-      </View>
+      </Card>
 
-      <View style={styles.panel}>
+      <Card style={styles.panel}>
         <SectionHeader
           title="Linked journal entries"
           subtitle="Reflections tied back to this goal."
@@ -139,9 +140,9 @@ export default function GoalDetailScreen() {
             ))}
           </View>
         )}
-      </View>
+      </Card>
 
-      <View style={styles.panel}>
+      <Card style={styles.panel}>
         <SectionHeader title="Progress logs" subtitle="History of progress updates." />
         {progressLogs.length === 0 ? (
           <Text style={styles.emptyText}>No progress logs yet.</Text>
@@ -156,14 +157,14 @@ export default function GoalDetailScreen() {
             ))}
           </View>
         )}
-      </View>
+      </Card>
 
-      <View style={styles.panel}>
+      <Card style={styles.panel}>
         <SectionHeader title="Notes" subtitle="Private context for future edits." />
         <Text style={goal.notes ? styles.notesText : styles.emptyText}>
           {goal.notes || "No notes yet."}
         </Text>
-      </View>
+      </Card>
     </Screen>
   );
 }
@@ -204,7 +205,7 @@ function GoalEditPanel({
   };
 
   return (
-    <View style={styles.panel}>
+    <Card style={styles.panel}>
       <SectionHeader title="Edit goal" subtitle="Keep the plan useful, not precious." />
       <TextField label="Goal title" onChangeText={setTitle} value={title} />
       <TextField
@@ -249,7 +250,7 @@ function GoalEditPanel({
           <PrimaryButton label="Save changes" onPress={save} />
         </View>
       </View>
-    </View>
+    </Card>
   );
 }
 
@@ -299,7 +300,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 function InfoPanel({ items, title }: { items: string[]; title: string }) {
   return (
-    <View style={styles.panel}>
+    <Card style={styles.panel}>
       <SectionHeader title={title} />
       <View style={styles.list}>
         {items.map((item) => (
@@ -308,7 +309,7 @@ function InfoPanel({ items, title }: { items: string[]; title: string }) {
           </Text>
         ))}
       </View>
-    </View>
+    </Card>
   );
 }
 
@@ -329,10 +330,6 @@ function clampPercent(value: number) {
 
 const styles = StyleSheet.create({
   hero: {
-    borderRadius: theme.radius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
     padding: theme.spacing.xl,
     gap: theme.spacing.sm,
   },
@@ -358,11 +355,6 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   panel: {
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
     gap: theme.spacing.md,
   },
   list: {
@@ -476,7 +468,7 @@ const styles = StyleSheet.create({
   },
   choiceChipActive: {
     borderColor: theme.colors.primary,
-    backgroundColor: "rgba(242,193,78,0.16)",
+    backgroundColor: theme.alpha.primary16,
   },
   choiceText: {
     color: theme.colors.muted,

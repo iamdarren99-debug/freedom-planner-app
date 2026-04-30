@@ -18,7 +18,6 @@ import {
   AppSettings,
   DailyCompletionsByDate,
   Goal,
-  GoalProgressSummary,
   JournalEntry,
   MindsetReminder,
   ProgressLog,
@@ -76,10 +75,6 @@ interface AppActions {
   updateJournalEntry: (id: string, updates: UpdateJournalEntryPayload) => void;
   deleteJournalEntry: (id: string) => void;
   addProgressLog: (payload: AddProgressLogPayload) => ProgressLog;
-  getTasksByDate: (date: string) => Task[];
-  getTasksByGoal: (goalId: string) => Task[];
-  getJournalEntriesByDate: (date: string) => JournalEntry[];
-  getGoalProgressSummary: (goalId: string) => GoalProgressSummary | undefined;
   updateAppSettings: (updates: Partial<AppSettings>) => void;
   resetToSeedData: () => void;
   resetDemoData: () => void;
@@ -117,6 +112,10 @@ function nextGoalStatus(goal: Goal, progressPercentage: number): Goal["status"] 
     return "COMPLETED";
   }
 
+  if (progressPercentage < 100 && goal.status === "COMPLETED") {
+    return "IN_PROGRESS";
+  }
+
   if (progressPercentage > 0 && goal.status === "NOT_STARTED") {
     return "IN_PROGRESS";
   }
@@ -147,6 +146,14 @@ function isOptionalArray(value: unknown) {
   return value === undefined || Array.isArray(value);
 }
 
+function hasValidFirstId(value: unknown) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return true;
+  }
+
+  return isRecord(value[0]) && typeof value[0].id === "string";
+}
+
 function isPersistedAppState(value: unknown): value is Partial<PersistedAppState> {
   if (!isRecord(value)) {
     return false;
@@ -154,11 +161,17 @@ function isPersistedAppState(value: unknown): value is Partial<PersistedAppState
 
   return (
     isOptionalArray(value.targetAreas) &&
+    hasValidFirstId(value.targetAreas) &&
     isOptionalArray(value.goals) &&
+    hasValidFirstId(value.goals) &&
     isOptionalArray(value.tasks) &&
+    hasValidFirstId(value.tasks) &&
     isOptionalArray(value.journalEntries) &&
+    hasValidFirstId(value.journalEntries) &&
     isOptionalArray(value.progressLogs) &&
+    hasValidFirstId(value.progressLogs) &&
     isOptionalArray(value.mindsetReminders) &&
+    hasValidFirstId(value.mindsetReminders) &&
     (value.weeklySystem === undefined || isRecord(value.weeklySystem)) &&
     (value.thirtyDayPlan === undefined || isRecord(value.thirtyDayPlan)) &&
     (value.appSettings === undefined || isRecord(value.appSettings)) &&
@@ -172,6 +185,29 @@ function createProgressLog(payload: AddProgressLogPayload): ProgressLog {
     id: payload.id ?? createId("progress"),
     value: clampProgress(payload.value),
   };
+}
+
+function upsertProgressLog(progressLogs: ProgressLog[], log: ProgressLog) {
+  const existingIndex = progressLogs.findIndex(
+    (item) => item.goalId === log.goalId && item.date === log.date,
+  );
+
+  if (existingIndex >= 0) {
+    const nextLogs = [...progressLogs];
+    nextLogs[existingIndex] = {
+      ...nextLogs[existingIndex],
+      value: log.value,
+      note: log.note,
+    };
+
+    return nextLogs.slice(0, 200);
+  }
+
+  return [log, ...progressLogs].slice(0, 200);
+}
+
+function isWeeklyActionTask(goal: Goal | undefined, task: Task) {
+  return Boolean(goal?.weeklyActions.some((action) => action === task.title));
 }
 
 export const useAppStore = create<AppStore>()(
@@ -241,23 +277,28 @@ export const useAppStore = create<AppStore>()(
       updateGoalProgress: (id, progressPercentage, note) =>
         set((state) => {
           const now = new Date();
-          const goalExists = state.goals.some((goal) => goal.id === id);
+          const goal = state.goals.find((candidate) => candidate.id === id);
           const nextProgress = clampProgress(progressPercentage);
+
+          if (!goal) {
+            return {};
+          }
+
+          if (nextProgress === goal.progressPercentage) {
+            return {
+              goals: updateGoalProgressInList(state.goals, id, nextProgress, now.toISOString()),
+            };
+          }
 
           return {
             goals: updateGoalProgressInList(state.goals, id, nextProgress, now.toISOString()),
-            progressLogs: goalExists
-              ? [
-                  {
-                    id: createId("progress"),
-                    goalId: id,
-                    date: getDateKey(now),
-                    value: nextProgress,
-                    note,
-                  },
-                  ...state.progressLogs,
-                ]
-              : state.progressLogs,
+            progressLogs: upsertProgressLog(state.progressLogs, {
+              id: createId("progress"),
+              goalId: id,
+              date: getDateKey(now),
+              value: nextProgress,
+              note,
+            }),
           };
         }),
       addTask: (payload) => {
@@ -289,74 +330,129 @@ export const useAppStore = create<AppStore>()(
             ),
           };
         }),
-      completeTask: (id, notes) =>
-        set((state) => {
-          const now = new Date();
-          const task = state.tasks.find((candidate) => candidate.id === id);
+      // Weekly-action tasks use the same daily completion path as the Dashboard focus checkbox.
+      completeTask: (id, notes) => {
+        const state = get();
+        const task = state.tasks.find((candidate) => candidate.id === id);
 
-          if (!task || task.status === "DONE") {
-            return {};
-          }
+        if (!task) {
+          return;
+        }
 
-          const nextTasks = state.tasks.map((candidate) =>
+        const now = new Date();
+        const goal = task.goalId
+          ? state.goals.find((candidate) => candidate.id === task.goalId)
+          : undefined;
+        const nextStatus = task.status === "DONE" ? "TODO" : "DONE";
+
+        set((current) => ({
+          tasks: current.tasks.map((candidate) =>
             candidate.id === id
               ? {
                   ...candidate,
-                  status: "DONE" as const,
+                  status: nextStatus,
                   notes: notes ?? candidate.notes,
                   updatedAt: now.toISOString(),
                 }
               : candidate,
-          );
+          ),
+        }));
 
-          if (!task.goalId) {
-            return { tasks: nextTasks };
+        if (task.goalId && isWeeklyActionTask(goal, task)) {
+          const completionDate = getDateKey();
+          const completions = get().dailyCompletions[completionDate] ?? [];
+          const alreadyComplete = isFocusItemComplete(completions, task.goalId, task.title);
+
+          if (
+            (nextStatus === "DONE" && !alreadyComplete) ||
+            (nextStatus === "TODO" && alreadyComplete)
+          ) {
+            get().toggleFocusItem(task.goalId, task.title);
           }
 
-          const goal = state.goals.find((candidate) => candidate.id === task.goalId);
-          const nextProgress = goal ? clampProgress(goal.progressPercentage + 1) : 0;
+          return;
+        }
 
-          return {
-            tasks: nextTasks,
-            goals: goal
-              ? updateGoalProgressInList(
-                  state.goals,
-                  task.goalId,
-                  nextProgress,
-                  now.toISOString(),
-                )
-              : state.goals,
-            progressLogs: goal
-              ? [
-                  {
-                    id: createId("progress"),
-                    goalId: task.goalId,
-                    date: getDateKey(now),
-                    value: nextProgress,
-                    note: `Completed task: ${task.title}`,
-                  },
-                  ...state.progressLogs,
-                ]
-              : state.progressLogs,
-          };
-        }),
-      skipTask: (id, notes) =>
-        set((state) => {
-          const now = new Date().toISOString();
+        if (!task.goalId || !goal) {
+          return;
+        }
 
-          return {
-            tasks: state.tasks.map((task) =>
+        const nextProgress = clampProgress(
+          goal.progressPercentage + (nextStatus === "DONE" ? 1 : -1),
+        );
+
+        set((current) => ({
+          goals: updateGoalProgressInList(
+            current.goals,
+            task.goalId as string,
+            nextProgress,
+            now.toISOString(),
+          ),
+          progressLogs:
+            nextStatus === "DONE" && nextProgress !== goal.progressPercentage
+              ? upsertProgressLog(current.progressLogs, {
+                  id: createId("progress"),
+                  goalId: task.goalId as string,
+                  date: getDateKey(now),
+                  value: nextProgress,
+                  note: `Completed task: ${task.title}`,
+                })
+              : current.progressLogs,
+        }));
+      },
+      skipTask: (id, notes) => {
+        const state = get();
+        const task = state.tasks.find((candidate) => candidate.id === id);
+
+        if (!task) {
+          return;
+        }
+
+        const now = new Date();
+        const goal = task.goalId
+          ? state.goals.find((candidate) => candidate.id === task.goalId)
+          : undefined;
+        const nextStatus = task.status === "SKIPPED" ? "TODO" : "SKIPPED";
+        const wasDone = task.status === "DONE";
+
+        set((current) => {
+          const nextState: Partial<AppStore> = {
+            tasks: current.tasks.map((task) =>
               task.id === id
                 ? {
                     ...task,
-                    status: "SKIPPED",
+                    status: nextStatus,
                     notes: notes ?? task.notes,
-                    updatedAt: now,
+                    updatedAt: now.toISOString(),
                   }
                 : task,
             ),
           };
-        }),
+
+          if (wasDone && task.goalId && goal && !isWeeklyActionTask(goal, task)) {
+            nextState.goals = updateGoalProgressInList(
+              current.goals,
+              task.goalId,
+              clampProgress(goal.progressPercentage - 1),
+              now.toISOString(),
+            );
+          }
+
+          return nextState;
+        });
+
+        if (wasDone && task.goalId && goal && isWeeklyActionTask(goal, task)) {
+          const alreadyComplete = isFocusItemComplete(
+            state.dailyCompletions[getDateKey(now)] ?? [],
+            task.goalId,
+            task.title,
+          );
+
+          if (alreadyComplete) {
+            get().toggleFocusItem(task.goalId, task.title);
+          }
+        }
+      },
       deleteTask: (id) =>
         set((state) => ({
           tasks: state.tasks.filter((task) => task.id !== id),
@@ -401,41 +497,12 @@ export const useAppStore = create<AppStore>()(
           journalEntries: state.journalEntries.filter((entry) => entry.id !== id),
         })),
       addProgressLog: (payload) => {
-        const now = new Date().toISOString();
         const log = createProgressLog(payload);
 
         set((state) => ({
-          progressLogs: [log, ...state.progressLogs],
-          goals: updateGoalProgressInList(state.goals, log.goalId, log.value, now),
+          progressLogs: upsertProgressLog(state.progressLogs, log),
         }));
         return log;
-      },
-      getTasksByDate: (date) => get().tasks.filter((task) => task.date === date),
-      getTasksByGoal: (goalId) => get().tasks.filter((task) => task.goalId === goalId),
-      getJournalEntriesByDate: (date) =>
-        get().journalEntries.filter((entry) => entry.date === date),
-      getGoalProgressSummary: (goalId) => {
-        const state = get();
-        const goal = state.goals.find((candidate) => candidate.id === goalId);
-
-        if (!goal) {
-          return undefined;
-        }
-
-        const tasks = state.tasks.filter((task) => task.goalId === goalId);
-        const logs = state.progressLogs.filter((log) => log.goalId === goalId);
-
-        return {
-          goalId: goal.id,
-          title: goal.title,
-          status: goal.status,
-          progressPercentage: goal.progressPercentage,
-          totalTasks: tasks.length,
-          completedTasks: tasks.filter((task) => task.status === "DONE").length,
-          skippedTasks: tasks.filter((task) => task.status === "SKIPPED").length,
-          totalProgressLogs: logs.length,
-          latestProgressLogDate: logs[0]?.date,
-        };
       },
       updateAppSettings: (updates) =>
         set((state) => ({
@@ -469,9 +536,9 @@ export const useAppStore = create<AppStore>()(
             goals: goal
               ? updateGoalProgressInList(state.goals, goalId, nextProgress, now.toISOString())
               : state.goals,
-            progressLogs: goal
-              ? [
-                  {
+            progressLogs:
+              goal && nextProgress !== goal.progressPercentage
+                ? upsertProgressLog(state.progressLogs, {
                     id: createId("progress"),
                     goalId,
                     date: todayKey,
@@ -479,10 +546,8 @@ export const useAppStore = create<AppStore>()(
                     note: alreadyComplete
                       ? `Unchecked daily focus: ${item}`
                       : `Completed daily focus: ${item}`,
-                  },
-                  ...state.progressLogs,
-                ]
-              : state.progressLogs,
+                  })
+                : state.progressLogs,
             dailyCompletions: {
               ...state.dailyCompletions,
               [todayKey]: alreadyComplete
@@ -518,30 +583,41 @@ export const useAppStore = create<AppStore>()(
         appSettings: state.appSettings,
         dailyCompletions: state.dailyCompletions,
       }),
-      // TODO: Replace this with real per-version migrators before the next schema bump.
-      migrate: (persisted) => persisted as PersistedAppState,
+      // Version 2 introduced appSettings; older payloads receive the seeded defaults.
+      migrate: (persisted, fromVersion) =>
+        fromVersion < 2
+          ? {
+              ...(isRecord(persisted) ? persisted : {}),
+              appSettings: cloneData(seedAppSettings),
+            }
+          : (persisted as PersistedAppState),
       merge: (persisted, current) => {
-        if (!isPersistedAppState(persisted)) {
+        try {
+          if (!isPersistedAppState(persisted)) {
+            return current;
+          }
+
+          return {
+            ...current,
+            targetAreas: persisted.targetAreas ?? current.targetAreas,
+            goals: persisted.goals ?? current.goals,
+            tasks: persisted.tasks ?? current.tasks,
+            journalEntries: persisted.journalEntries ?? current.journalEntries,
+            progressLogs: persisted.progressLogs ?? current.progressLogs,
+            weeklySystem: persisted.weeklySystem ?? current.weeklySystem,
+            thirtyDayPlan: persisted.thirtyDayPlan ?? current.thirtyDayPlan,
+            mindsetReminders: persisted.mindsetReminders ?? current.mindsetReminders,
+            dailyCompletions: persisted.dailyCompletions ?? current.dailyCompletions,
+            appSettings: {
+              ...current.appSettings,
+              ...(isRecord(persisted.appSettings) ? persisted.appSettings : {}),
+            },
+            hasHydrated: false,
+          } as AppStore;
+        } catch (error) {
+          console.warn("Ignored corrupted planner storage", error);
           return current;
         }
-
-        return {
-          ...current,
-          targetAreas: persisted.targetAreas ?? current.targetAreas,
-          goals: persisted.goals ?? current.goals,
-          tasks: persisted.tasks ?? current.tasks,
-          journalEntries: persisted.journalEntries ?? current.journalEntries,
-          progressLogs: persisted.progressLogs ?? current.progressLogs,
-          weeklySystem: persisted.weeklySystem ?? current.weeklySystem,
-          thirtyDayPlan: persisted.thirtyDayPlan ?? current.thirtyDayPlan,
-          mindsetReminders: persisted.mindsetReminders ?? current.mindsetReminders,
-          dailyCompletions: persisted.dailyCompletions ?? current.dailyCompletions,
-          appSettings: {
-            ...current.appSettings,
-            ...(isRecord(persisted.appSettings) ? persisted.appSettings : {}),
-          },
-          hasHydrated: false,
-        } as AppStore;
       },
       onRehydrateStorage: () => (state, error) => {
         if (error) {

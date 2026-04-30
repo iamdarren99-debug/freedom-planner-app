@@ -2,6 +2,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { theme } from "../../constants/theme";
+import { Card } from "./Card";
 
 interface FocusItemRowProps {
   goalTitle: string;
@@ -20,28 +21,24 @@ export function FocusItemRow({
 }: FocusItemRowProps) {
   return (
     <Pressable
-      android_ripple={{ color: "rgba(255,255,255,0.06)" }}
+      android_ripple={{ color: theme.alpha.white06 }}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.row,
-        {
-          opacity: pressed ? 0.94 : 1,
-          borderColor: complete ? accentColor : theme.colors.border,
-        },
-      ]}
+      style={({ pressed }) => ({ opacity: pressed ? 0.94 : 1 })}
     >
-      <MaterialCommunityIcons
-        color={complete ? accentColor : theme.colors.subtle}
-        name={complete ? "checkbox-marked-circle" : "checkbox-blank-circle-outline"}
-        size={22}
-      />
+      <Card style={[styles.row, { borderColor: complete ? accentColor : theme.colors.border }]}>
+        <MaterialCommunityIcons
+          color={complete ? accentColor : theme.colors.subtle}
+          name={complete ? "checkbox-marked-circle" : "checkbox-blank-circle-outline"}
+          size={22}
+        />
 
-      <View style={styles.copy}>
-        <Text numberOfLines={1} style={[styles.goalTitle, { color: accentColor }]}>
-          {goalTitle}
-        </Text>
-        <Text style={styles.item}>{item}</Text>
-      </View>
+        <View style={styles.copy}>
+          <Text numberOfLines={1} style={[styles.goalTitle, { color: accentColor }]}>
+            {goalTitle}
+          </Text>
+          <Text style={styles.item}>{item}</Text>
+        </View>
+      </Card>
     </Pressable>
   );
 }
@@ -51,9 +48,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: theme.spacing.md,
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    backgroundColor: theme.colors.surface,
     padding: theme.spacing.md,
   },
   copy: {

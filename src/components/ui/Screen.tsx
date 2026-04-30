@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, RefObject } from "react";
 import {
   ScrollView,
   ScrollViewProps,
@@ -14,13 +14,15 @@ import { theme } from "../../constants/theme";
 interface ScreenProps extends Pick<ScrollViewProps, "refreshControl"> {
   children: ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
+  scrollRef?: RefObject<ScrollView | null>;
 }
 
-export function Screen({ children, contentStyle, refreshControl }: ScreenProps) {
+export function Screen({ children, contentStyle, refreshControl, scrollRef }: ScreenProps) {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <ScrollView
         contentContainerStyle={[styles.content, contentStyle]}
+        ref={scrollRef}
         refreshControl={refreshControl}
         showsVerticalScrollIndicator={false}
       >

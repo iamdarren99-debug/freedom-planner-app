@@ -17,6 +17,17 @@ export const theme = {
     skills: "#C27CFF",
     personal: "#FF7FA4",
   },
+  alpha: {
+    primary24: "rgba(242,193,78,0.24)",
+    primary22: "rgba(242,193,78,0.22)",
+    primary18: "rgba(242,193,78,0.18)",
+    primary16: "rgba(242,193,78,0.16)",
+    accent30: "rgba(98,179,255,0.3)",
+    success18: "rgba(126,220,132,0.18)",
+    danger50: "rgba(255,125,108,0.5)",
+    white08: "rgba(255,255,255,0.08)",
+    white06: "rgba(255,255,255,0.06)",
+  },
   spacing: {
     xs: 6,
     sm: 10,

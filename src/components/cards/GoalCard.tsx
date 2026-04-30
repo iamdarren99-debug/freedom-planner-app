@@ -1,11 +1,13 @@
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { AREA_META } from "../../constants/app";
 import { theme } from "../../constants/theme";
 import { Goal } from "../../types/planner";
 import { goalStatusLabel } from "../../utils/planning";
+import { useAppStore } from "../../store/useAppStore";
 import { Badge } from "../ui/Badge";
+import { Card } from "../ui/Card";
 
 interface GoalCardProps {
   goal: Goal;
@@ -14,65 +16,72 @@ interface GoalCardProps {
 export function GoalCard({ goal }: GoalCardProps) {
   const router = useRouter();
   const area = AREA_META[goal.targetAreaId];
+  const deleteGoal = useAppStore((state) => state.deleteGoal);
+
+  const confirmDelete = () => {
+    Alert.alert(
+      "Delete goal?",
+      "This removes the goal, linked tasks, progress logs, and daily completions.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: () => deleteGoal(goal.id) },
+      ],
+    );
+  };
 
   return (
     <Pressable
-      android_ripple={{ color: "rgba(255,255,255,0.06)" }}
+      android_ripple={{ color: theme.alpha.white06 }}
+      onLongPress={confirmDelete}
       onPress={() =>
         router.push({
           pathname: "/goals/[id]",
           params: { id: goal.id },
         })
       }
-      style={({ pressed }) => [styles.card, { opacity: pressed ? 0.94 : 1 }]}
+      style={({ pressed }) => ({ opacity: pressed ? 0.94 : 1 })}
     >
-      <View style={styles.row}>
-        <Text numberOfLines={1} style={[styles.area, { color: area.color }]}>
-          {area.label}
-        </Text>
-        <Badge
-          label={goal.priority}
-          tone={goal.priority === "HIGH" ? "highlight" : "default"}
-        />
-      </View>
+      <Card>
+        <View style={styles.row}>
+          <Text numberOfLines={1} style={[styles.area, { color: area.color }]}>
+            {area.label}
+          </Text>
+          <Badge
+            label={goal.priority}
+            tone={goal.priority === "HIGH" ? "highlight" : "default"}
+          />
+        </View>
 
-      <Text style={styles.title}>{goal.title}</Text>
-      <Text style={styles.description}>{goal.description}</Text>
-      <View style={styles.metricBox}>
-        <Text style={styles.metricLabel}>Success metric</Text>
-        <Text style={styles.metricText}>{goal.successMetric}</Text>
-      </View>
+        <Text style={styles.title}>{goal.title}</Text>
+        <Text style={styles.description}>{goal.description}</Text>
+        <View style={styles.metricBox}>
+          <Text style={styles.metricLabel}>Success metric</Text>
+          <Text style={styles.metricText}>{goal.successMetric}</Text>
+        </View>
 
-      <View style={styles.row}>
-        <Badge
-          label={goalStatusLabel(goal.status)}
-          tone={goal.status === "IN_PROGRESS" ? "success" : "default"}
-        />
-        <Text style={styles.timeline}>{goal.timeline}</Text>
-      </View>
+        <View style={styles.row}>
+          <Badge
+            label={goalStatusLabel(goal.status)}
+            tone={goal.status === "IN_PROGRESS" ? "success" : "default"}
+          />
+          <Text style={styles.timeline}>{goal.timeline}</Text>
+        </View>
 
-      <View style={styles.progressTrack}>
-        <View
-          style={[
-            styles.progressFill,
-            { width: `${goal.progressPercentage}%`, backgroundColor: area.color },
-          ]}
-        />
-      </View>
-      <Text style={styles.progressText}>{goal.progressPercentage}% progress</Text>
+        <View style={styles.progressTrack}>
+          <View
+            style={[
+              styles.progressFill,
+              { width: `${goal.progressPercentage}%`, backgroundColor: area.color },
+            ]}
+          />
+        </View>
+        <Text style={styles.progressText}>{goal.progressPercentage}% progress</Text>
+      </Card>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
-    gap: theme.spacing.md,
-  },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",

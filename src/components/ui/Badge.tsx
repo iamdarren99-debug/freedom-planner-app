@@ -10,9 +10,9 @@ interface BadgeProps {
 export function Badge({ label, tone = "default" }: BadgeProps) {
   const backgroundColor =
     tone === "highlight"
-      ? "rgba(242,193,78,0.18)"
+      ? theme.alpha.primary18
       : tone === "success"
-        ? "rgba(126,220,132,0.18)"
+        ? theme.alpha.success18
         : theme.colors.surfaceAlt;
 
   return (
