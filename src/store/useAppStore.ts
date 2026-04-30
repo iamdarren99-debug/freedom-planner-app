@@ -28,6 +28,7 @@ import {
 } from "../types/planner";
 
 const PERSIST_KEY = "freedom-planner";
+const MAX_JOURNAL_ENTRIES = 500;
 
 type AddGoalPayload = Omit<
   Goal,
@@ -490,7 +491,9 @@ export const useAppStore = create<AppStore>()(
           updatedAt: now.toISOString(),
         };
 
-        set((state) => ({ journalEntries: [entry, ...state.journalEntries] }));
+        set((state) => ({
+          journalEntries: [entry, ...state.journalEntries].slice(0, MAX_JOURNAL_ENTRIES),
+        }));
         return entry;
       },
       updateJournalEntry: (id, updates) =>

@@ -30,6 +30,7 @@ import { toOptionalNumber } from "../../src/utils/text";
 
 export default function PlannerScreen() {
   const goals = useAppStore((state) => state.goals);
+  const journalEntries = useAppStore((state) => state.journalEntries);
   const tasks = useAppStore((state) => state.tasks);
   const weeklySystem = useAppStore((state) => state.weeklySystem);
   const addTask = useAppStore((state) => state.addTask);
@@ -188,6 +189,9 @@ export default function PlannerScreen() {
               dayTasks.map((task) => (
                 <TaskCard
                   goal={goals.find((goal) => goal.id === task.goalId)}
+                  journalEntries={journalEntries.filter((entry) =>
+                    entry.linkedTaskIds.includes(task.id),
+                  )}
                   key={task.id}
                   onComplete={() => completeTask(task.id)}
                   onDelete={() => deleteTask(task.id)}

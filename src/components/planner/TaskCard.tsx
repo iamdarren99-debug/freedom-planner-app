@@ -3,12 +3,14 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { AREA_META } from "../../constants/app";
 import { theme } from "../../constants/theme";
-import { Goal, Task } from "../../types/planner";
+import { Goal, JournalEntry, Task } from "../../types/planner";
+import { formatDate } from "../../utils/planning";
 import { SmallAction } from "../forms/SmallAction";
 import { Card } from "../ui/Card";
 
 interface TaskCardProps {
   goal?: Goal;
+  journalEntries?: JournalEntry[];
   onComplete: () => void;
   onDelete: () => void;
   onEdit: () => void;
@@ -16,7 +18,15 @@ interface TaskCardProps {
   task: Task;
 }
 
-export function TaskCard({ goal, onComplete, onDelete, onEdit, onSkip, task }: TaskCardProps) {
+export function TaskCard({
+  goal,
+  journalEntries = [],
+  onComplete,
+  onDelete,
+  onEdit,
+  onSkip,
+  task,
+}: TaskCardProps) {
   const accentColor = goal ? AREA_META[goal.targetAreaId].color : theme.colors.primary;
   const done = task.status === "DONE";
   const skipped = task.status === "SKIPPED";
@@ -35,6 +45,22 @@ export function TaskCard({ goal, onComplete, onDelete, onEdit, onSkip, task }: T
       </View>
       {task.description ? <Text style={styles.taskBody}>{task.description}</Text> : null}
       {task.notes ? <Text style={styles.taskNotes}>{task.notes}</Text> : null}
+      {journalEntries.length > 0 ? (
+        <View style={styles.journalBlock}>
+          <Text style={styles.journalHeading}>Linked journal</Text>
+          {journalEntries.slice(0, 2).map((entry) => (
+            <View key={entry.id} style={styles.journalItem}>
+              <Text style={styles.journalTitle}>{entry.title}</Text>
+              <Text style={styles.journalMeta}>{formatDate(entry.date)}</Text>
+              {entry.progressReflection ? (
+                <Text style={styles.journalBody}>{entry.progressReflection}</Text>
+              ) : (
+                <Text style={styles.journalBody}>{entry.content}</Text>
+              )}
+            </View>
+          ))}
+        </View>
+      ) : null}
       <View style={styles.taskActions}>
         <SmallAction label={done ? "Undo done" : "Done"} onPress={onComplete} />
         <SmallAction label={skipped ? "Undo skip" : "Skip"} onPress={onSkip} disabled={done} />
@@ -117,6 +143,38 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     padding: theme.spacing.md,
+  },
+  journalBlock: {
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    gap: theme.spacing.sm,
+    padding: theme.spacing.md,
+  },
+  journalHeading: {
+    color: theme.colors.primary,
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 0.7,
+    textTransform: "uppercase",
+  },
+  journalItem: {
+    gap: 2,
+  },
+  journalTitle: {
+    color: theme.colors.text,
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  journalMeta: {
+    color: theme.colors.subtle,
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  journalBody: {
+    color: theme.colors.muted,
+    fontSize: 12,
+    lineHeight: 18,
   },
   taskActions: {
     flexDirection: "row",

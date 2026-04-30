@@ -6,6 +6,7 @@ import { AREA_META } from "../../src/constants/app";
 import { theme } from "../../src/constants/theme";
 import { PrimaryButton } from "../../src/components/forms/PrimaryButton";
 import { TextField } from "../../src/components/forms/TextField";
+import { JournalEntryCard } from "../../src/components/journal/JournalEntryCard";
 import { Badge } from "../../src/components/ui/Badge";
 import { Card } from "../../src/components/ui/Card";
 import { EmptyState } from "../../src/components/ui/EmptyState";
@@ -14,6 +15,7 @@ import { SectionHeader } from "../../src/components/ui/SectionHeader";
 import { useAppStore } from "../../src/store/useAppStore";
 import { Goal, GoalPriority, GoalStatus } from "../../src/types/planner";
 import { formatDate, goalStatusLabel } from "../../src/utils/planning";
+import { getJournalEntriesByGoal } from "../../src/utils/selectors";
 
 const PRIORITIES: GoalPriority[] = ["LOW", "MEDIUM", "HIGH"];
 const STATUSES: GoalStatus[] = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "PAUSED"];
@@ -22,8 +24,9 @@ export default function GoalDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const goal = useAppStore((state) => state.goals.find((item) => item.id === id));
   const tasks = useAppStore((state) => state.tasks.filter((task) => task.goalId === id));
+  const allTasks = useAppStore((state) => state.tasks);
   const journalEntries = useAppStore((state) =>
-    state.journalEntries.filter((entry) => entry.linkedGoalIds.includes(id)),
+    getJournalEntriesByGoal(state, id),
   );
   const progressLogs = useAppStore((state) =>
     state.progressLogs.filter((log) => log.goalId === id),
@@ -132,11 +135,7 @@ export default function GoalDetailScreen() {
         ) : (
           <View style={styles.list}>
             {journalEntries.map((entry) => (
-              <View key={entry.id} style={styles.linkedCard}>
-                <Text style={styles.linkedTitle}>{entry.title}</Text>
-                <Text style={styles.linkedMeta}>{formatDate(entry.date)}</Text>
-                <Text style={styles.linkedBody}>{entry.content}</Text>
-              </View>
+              <JournalEntryCard entry={entry} goals={[goal]} key={entry.id} tasks={allTasks} />
             ))}
           </View>
         )}

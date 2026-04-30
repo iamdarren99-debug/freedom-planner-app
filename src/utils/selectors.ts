@@ -26,6 +26,52 @@ export function getJournalEntriesByDate(state: JournalState, date: string) {
   return state.journalEntries.filter((entry) => entry.date === date);
 }
 
+export function getJournalEntriesByGoal(state: JournalState, goalId: string) {
+  return state.journalEntries.filter((entry) => entry.linkedGoalIds.includes(goalId));
+}
+
+export function getJournalEntriesByTask(state: JournalState, taskId: string) {
+  return state.journalEntries.filter((entry) => entry.linkedTaskIds.includes(taskId));
+}
+
+export function searchJournalEntries(entries: JournalEntry[], query: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return entries;
+  }
+
+  return entries.filter((entry) =>
+    [
+      entry.title,
+      entry.content,
+      entry.mood,
+      entry.progressReflection,
+    ]
+      .filter(Boolean)
+      .some((value) => value?.toLowerCase().includes(normalizedQuery)),
+  );
+}
+
+export function filterJournalEntries({
+  date,
+  entries,
+  goalId,
+  query,
+}: {
+  date?: string;
+  entries: JournalEntry[];
+  goalId?: string;
+  query?: string;
+}) {
+  const dateFiltered = date ? entries.filter((entry) => entry.date === date) : entries;
+  const goalFiltered = goalId
+    ? dateFiltered.filter((entry) => entry.linkedGoalIds.includes(goalId))
+    : dateFiltered;
+
+  return searchJournalEntries(goalFiltered, query ?? "");
+}
+
 export function getGoalProgressSummary(
   state: GoalProgressState,
   goalId: string,

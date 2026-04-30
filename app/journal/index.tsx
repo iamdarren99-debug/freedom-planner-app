@@ -1,109 +1,160 @@
-import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { useMemo, useState } from "react";
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
 
-import { theme } from "../../src/constants/theme";
-import { useAppStore } from "../../src/store/useAppStore";
-import { formatDate } from "../../src/utils/planning";
+import {
+  createEmptyJournalForm,
+  JournalEditor,
+  JournalFormState,
+} from "../../src/components/journal/JournalEditor";
+import { JournalEntryCard } from "../../src/components/journal/JournalEntryCard";
+import { JournalFilters } from "../../src/components/journal/JournalFilters";
+import { EmptyState } from "../../src/components/ui/EmptyState";
 import { Screen } from "../../src/components/ui/Screen";
 import { SectionHeader } from "../../src/components/ui/SectionHeader";
-import { EmptyState } from "../../src/components/ui/EmptyState";
-import { PrimaryButton } from "../../src/components/forms/PrimaryButton";
-import { TextField } from "../../src/components/forms/TextField";
-import { Card } from "../../src/components/ui/Card";
+import { theme } from "../../src/constants/theme";
+import { useAppStore } from "../../src/store/useAppStore";
+import { getDateKey, formatDate } from "../../src/utils/planning";
+import { filterJournalEntries, getTasksByDate } from "../../src/utils/selectors";
 
 export default function JournalScreen() {
+  const goals = useAppStore((state) => state.goals);
   const journalEntries = useAppStore((state) => state.journalEntries);
+  const tasks = useAppStore((state) => state.tasks);
   const addJournalEntry = useAppStore((state) => state.addJournalEntry);
 
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [selectedDate, setSelectedDate] = useState(getDateKey);
+  const [selectedGoalId, setSelectedGoalId] = useState<string | undefined>();
+  const [showAllDates, setShowAllDates] = useState(false);
+  const [query, setQuery] = useState("");
+  const [form, setForm] = useState<JournalFormState>(createEmptyJournalForm);
 
-  const disabled = title.trim().length === 0 || content.trim().length === 0;
+  const dayTasks = useMemo(
+    () => getTasksByDate({ tasks }, selectedDate),
+    [selectedDate, tasks],
+  );
+  const filteredEntries = useMemo(
+    () =>
+      filterJournalEntries({
+        date: showAllDates ? undefined : selectedDate,
+        entries: journalEntries,
+        goalId: selectedGoalId,
+        query,
+      }),
+    [journalEntries, query, selectedDate, selectedGoalId, showAllDates],
+  );
+
+  const saveEntry = () => {
+    const title = form.title.trim();
+    const content = form.content.trim();
+
+    if (!title || !content) {
+      return;
+    }
+
+    addJournalEntry({
+      title,
+      content,
+      date: selectedDate,
+      linkedGoalIds: form.linkedGoalIds,
+      linkedTaskIds: form.linkedTaskIds,
+      mood: form.mood.trim() || undefined,
+      progressReflection: form.progressReflection.trim() || undefined,
+    });
+    setForm(createEmptyJournalForm());
+  };
 
   return (
-    <Screen>
-      <SectionHeader
-        eyebrow="Journal"
-        title="Quick reflection"
-        subtitle="Capture wins, friction, and the next move while it is fresh."
-      />
-
-      <Card style={styles.panel}>
-        <TextField
-          label="Entry title"
-          onChangeText={setTitle}
-          placeholder="What happened today?"
-          value={title}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "android" ? "height" : undefined}
+      style={styles.keyboardAvoidingView}
+    >
+      <Screen>
+        <SectionHeader
+          eyebrow="Journal"
+          title="Notes, diary, and progress reflection"
+          subtitle="Connect what happened today to tasks, goals, and the bigger freedom plan."
         />
-        <TextField
-          label="Reflection"
-          multiline
-          onChangeText={setContent}
-          placeholder="Capture friction, wins, or the next move."
-          value={content}
-        />
-        <PrimaryButton
-          disabled={disabled}
-          label="Save entry"
-          onPress={() => {
-            if (disabled) {
-              return;
-            }
 
-            addJournalEntry({
-              title: title.trim(),
-              content: content.trim(),
-            });
-            setTitle("");
-            setContent("");
-          }}
+        <JournalEditor
+          dateLabel={formatDate(selectedDate)}
+          form={form}
+          goals={goals}
+          onChange={setForm}
+          onSave={saveEntry}
+          tasks={dayTasks}
         />
-      </Card>
 
-      <SectionHeader title="Recent entries" subtitle="Your reflections stay on this device." />
-      <View style={styles.stack}>
-        {journalEntries.length === 0 ? (
-          <EmptyState
-            title="No entries yet"
-            description="Add a quick reflection when you finish a meaningful block."
+        <View style={styles.sectionBlock}>
+          <SectionHeader
+            eyebrow="Review"
+            title="Find entries"
+            subtitle="Filter by day, linked goal, or any words you remember."
           />
-        ) : (
-          journalEntries.map((entry) => (
-            <Card key={entry.id} style={styles.entryCard}>
-              <Text style={styles.entryTitle}>{entry.title}</Text>
-              <Text style={styles.entryDate}>{formatDate(entry.createdAt)}</Text>
-              <Text style={styles.entryContent}>{entry.content}</Text>
-            </Card>
-          ))
-        )}
-      </View>
-    </Screen>
+          <JournalFilters
+            date={selectedDate}
+            goals={goals}
+            goalId={selectedGoalId}
+            onDateChange={setSelectedDate}
+            onGoalChange={setSelectedGoalId}
+            onSearchChange={setQuery}
+            onShowAllDatesChange={setShowAllDates}
+            onToday={() => setSelectedDate(getDateKey())}
+            query={query}
+            showAllDates={showAllDates}
+          />
+        </View>
+
+        <View style={styles.sectionBlock}>
+          <SectionHeader
+            title={`${filteredEntries.length} entries`}
+            subtitle={
+              showAllDates
+                ? "Showing reflections across all saved dates."
+                : `Showing reflections for ${formatDate(selectedDate)}.`
+            }
+          />
+          <View style={styles.stack}>
+            {filteredEntries.length === 0 ? (
+              <EmptyState
+                title="No entries found"
+                description="Write a note for this day or loosen the search filters."
+              />
+            ) : (
+              filteredEntries.map((entry) => (
+                <JournalEntryCard
+                  entry={entry}
+                  goals={goals}
+                  key={entry.id}
+                  tasks={tasks}
+                />
+              ))
+            )}
+          </View>
+        </View>
+
+        <Text style={styles.footerNote}>
+          Use journal entries for day notes, task notes, goal notes, total progress, or honest
+          diary reflections.
+        </Text>
+      </Screen>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  panel: {
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  sectionBlock: {
     gap: theme.spacing.md,
   },
   stack: {
     gap: theme.spacing.md,
   },
-  entryCard: {
-    gap: theme.spacing.xs,
-  },
-  entryTitle: {
-    color: theme.colors.text,
-    fontSize: 17,
-    fontWeight: "700",
-  },
-  entryDate: {
-    color: theme.colors.primary,
+  footerNote: {
+    color: theme.colors.subtle,
     fontSize: 12,
-    fontWeight: "700",
-  },
-  entryContent: {
-    color: theme.colors.muted,
-    fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 18,
+    textAlign: "center",
   },
 });
