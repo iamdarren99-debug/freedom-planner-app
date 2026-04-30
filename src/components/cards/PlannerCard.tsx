@@ -1,22 +1,21 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import { theme } from "../../constants/theme";
-import { PlannerBlock } from "../../types/planner";
 
 interface PlannerCardProps {
-  block: PlannerBlock;
+  title: string;
+  meta: string;
+  items: string[];
 }
 
-export function PlannerCard({ block }: PlannerCardProps) {
+export function PlannerCard({ title, meta, items }: PlannerCardProps) {
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>{block.title}</Text>
-      <Text style={styles.meta}>
-        {block.timeWindow} · {block.focus}
-      </Text>
-      {block.items.map((item) => (
+      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.meta}>{meta}</Text>
+      {items.map((item) => (
         <Text key={item} style={styles.item}>
-          • {item}
+          - {item}
         </Text>
       ))}
     </View>

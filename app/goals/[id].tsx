@@ -3,11 +3,12 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { AREA_META } from "../../src/constants/app";
 import { theme } from "../../src/constants/theme";
-import { useAppStore } from "../../src/store/useAppStore";
-import { Screen } from "../../src/components/ui/Screen";
 import { Badge } from "../../src/components/ui/Badge";
 import { EmptyState } from "../../src/components/ui/EmptyState";
+import { Screen } from "../../src/components/ui/Screen";
 import { SectionHeader } from "../../src/components/ui/SectionHeader";
+import { useAppStore } from "../../src/store/useAppStore";
+import { goalStatusLabel } from "../../src/utils/planning";
 
 export default function GoalDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -18,13 +19,13 @@ export default function GoalDetailScreen() {
       <Screen>
         <EmptyState
           title="Goal not found"
-          description="This detail route is ready, but the selected goal could not be loaded."
+          description="The selected goal could not be loaded."
         />
       </Screen>
     );
   }
 
-  const area = AREA_META[goal.area];
+  const area = AREA_META[goal.targetAreaId];
 
   return (
     <Screen>
@@ -35,34 +36,48 @@ export default function GoalDetailScreen() {
         <Text style={styles.description}>{goal.description}</Text>
 
         <View style={styles.badges}>
-          <Badge label={goal.priority} tone={goal.priority === "high" ? "highlight" : "default"} />
-          <Badge label={goal.status} tone={goal.status === "active" ? "success" : "default"} />
+          <Badge label={goal.priority} tone={goal.priority === "HIGH" ? "highlight" : "default"} />
+          <Badge
+            label={goalStatusLabel(goal.status)}
+            tone={goal.status === "IN_PROGRESS" ? "success" : "default"}
+          />
           <Badge label={goal.timeline} />
         </View>
       </View>
 
       <View style={styles.panel}>
-        <SectionHeader title="Weekly focus" subtitle="Phase 0 keeps detail simple and extendable." />
+        <SectionHeader title="Execution method" subtitle={goal.successMetric} />
         <View style={styles.list}>
-          {goal.weeklyFocus.map((item) => (
+          {goal.executionMethod.map((item) => (
             <Text key={item} style={styles.item}>
-              • {item}
+              - {item}
             </Text>
           ))}
         </View>
       </View>
 
       <View style={styles.panel}>
-        <SectionHeader title="Current progress" subtitle="A lightweight progress snapshot for the base app." />
+        <SectionHeader title="Weekly actions" subtitle="Actions that feed the daily loop." />
+        <View style={styles.list}>
+          {goal.weeklyActions.map((item) => (
+            <Text key={item} style={styles.item}>
+              - {item}
+            </Text>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.panel}>
+        <SectionHeader title="Current progress" subtitle="Goal progress from the data model." />
         <View style={styles.progressTrack}>
           <View
             style={[
               styles.progressFill,
-              { width: `${goal.progress}%`, backgroundColor: area.color },
+              { width: `${goal.progressPercentage}%`, backgroundColor: area.color },
             ]}
           />
         </View>
-        <Text style={styles.progressText}>{goal.progress}% complete</Text>
+        <Text style={styles.progressText}>{goal.progressPercentage}% complete</Text>
       </View>
     </Screen>
   );

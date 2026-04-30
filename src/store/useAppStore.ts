@@ -2,21 +2,40 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-import { seedGoals, seedJournalEntries, seedPlannerBlocks } from "../data/seed";
+import {
+  seedGoals,
+  seedJournalEntries,
+  seedMindsetReminders,
+  seedProgressLogs,
+  seedTargetAreas,
+  seedTasks,
+  seedThirtyDayPlan,
+  seedWeeklySystem,
+} from "../data/seed";
 import { createId, getDateKey, isFocusItemComplete } from "../utils/planning";
 import {
   DailyCompletionsByDate,
   Goal,
   JournalEntry,
-  PlannerBlock,
+  MindsetReminder,
+  ProgressLog,
+  TargetArea,
+  Task,
+  ThirtyDayPlan,
+  WeeklySystem,
 } from "../types/planner";
 
 const PERSIST_KEY = "freedom-planner";
 
 interface AppState {
+  targetAreas: TargetArea[];
   goals: Goal[];
-  plannerBlocks: PlannerBlock[];
+  tasks: Task[];
   journalEntries: JournalEntry[];
+  progressLogs: ProgressLog[];
+  weeklySystem: WeeklySystem;
+  thirtyDayPlan: ThirtyDayPlan;
+  mindsetReminders: MindsetReminder[];
   dailyCompletions: DailyCompletionsByDate;
   themeMode: "dark";
   hasHydrated: boolean;
@@ -32,9 +51,14 @@ interface AppActions {
 type AppStore = AppState & AppActions;
 
 const initialState: AppState = {
+  targetAreas: seedTargetAreas,
   goals: seedGoals,
-  plannerBlocks: seedPlannerBlocks,
+  tasks: seedTasks,
   journalEntries: seedJournalEntries,
+  progressLogs: seedProgressLogs,
+  weeklySystem: seedWeeklySystem,
+  thirtyDayPlan: seedThirtyDayPlan,
+  mindsetReminders: seedMindsetReminders,
   dailyCompletions: {},
   themeMode: "dark",
   hasHydrated: false,
@@ -46,17 +70,25 @@ export const useAppStore = create<AppStore>()(
       ...initialState,
       setHasHydrated: (value) => set({ hasHydrated: value }),
       addJournalEntry: ({ title, content }) =>
-        set((state) => ({
-          journalEntries: [
-            {
-              id: createId("journal"),
-              title,
-              content,
-              createdAt: new Date().toISOString(),
-            },
-            ...state.journalEntries,
-          ],
-        })),
+        set((state) => {
+          const now = new Date();
+
+          return {
+            journalEntries: [
+              {
+                id: createId("journal"),
+                date: getDateKey(now),
+                title,
+                content,
+                linkedGoalIds: [],
+                linkedTaskIds: [],
+                createdAt: now.toISOString(),
+                updatedAt: now.toISOString(),
+              },
+              ...state.journalEntries,
+            ],
+          };
+        }),
       toggleFocusItem: (goalId, item) =>
         set((state) => {
           const todayKey = getDateKey();
@@ -86,15 +118,21 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: PERSIST_KEY,
-      version: 0,
+      version: 1,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
+        targetAreas: state.targetAreas,
         goals: state.goals,
-        plannerBlocks: state.plannerBlocks,
+        tasks: state.tasks,
         journalEntries: state.journalEntries,
+        progressLogs: state.progressLogs,
+        weeklySystem: state.weeklySystem,
+        thirtyDayPlan: state.thirtyDayPlan,
+        mindsetReminders: state.mindsetReminders,
         dailyCompletions: state.dailyCompletions,
         themeMode: state.themeMode,
       }),
+      migrate: () => initialState,
       onRehydrateStorage: () => (state, error) => {
         if (error) {
           console.warn("Failed to rehydrate planner storage", error);

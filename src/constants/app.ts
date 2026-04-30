@@ -1,11 +1,11 @@
-import { GoalArea } from "../types/planner";
+import { TargetAreaId } from "../types/planner";
 import { theme } from "./theme";
 
 export const APP_NAME = "Freedom Planner";
 export const APP_TAGLINE = "A personal execution system for goals, planning, and daily follow-through.";
 
 export const AREA_META: Record<
-  GoalArea,
+  TargetAreaId,
   { label: string; description: string; color: string; icon: string }
 > = {
   financial: {
@@ -14,7 +14,7 @@ export const AREA_META: Record<
     color: theme.colors.financial,
     icon: "cash-multiple",
   },
-  career: {
+  "career-business": {
     label: "Career / Business",
     description: "Turn skills into income and ownership.",
     color: theme.colors.career,
@@ -26,7 +26,7 @@ export const AREA_META: Record<
     color: theme.colors.skills,
     icon: "brain",
   },
-  personal: {
+  "personal-relationship": {
     label: "Personal / Relationship",
     description: "Protect connection and lifestyle quality.",
     color: theme.colors.personal,

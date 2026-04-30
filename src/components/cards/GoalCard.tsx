@@ -1,9 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { AREA_META } from "../../constants/app";
 import { theme } from "../../constants/theme";
 import { Goal } from "../../types/planner";
+import { goalStatusLabel } from "../../utils/planning";
 import { Badge } from "../ui/Badge";
 
 interface GoalCardProps {
@@ -12,10 +13,11 @@ interface GoalCardProps {
 
 export function GoalCard({ goal }: GoalCardProps) {
   const router = useRouter();
-  const area = AREA_META[goal.area];
+  const area = AREA_META[goal.targetAreaId];
 
   return (
     <Pressable
+      android_ripple={{ color: "rgba(255,255,255,0.06)" }}
       onPress={() =>
         router.push({
           pathname: "/goals/[id]",
@@ -25,10 +27,12 @@ export function GoalCard({ goal }: GoalCardProps) {
       style={({ pressed }) => [styles.card, { opacity: pressed ? 0.94 : 1 }]}
     >
       <View style={styles.row}>
-        <Text style={[styles.area, { color: area.color }]}>{area.label}</Text>
+        <Text numberOfLines={1} style={[styles.area, { color: area.color }]}>
+          {area.label}
+        </Text>
         <Badge
           label={goal.priority}
-          tone={goal.priority === "high" ? "highlight" : "default"}
+          tone={goal.priority === "HIGH" ? "highlight" : "default"}
         />
       </View>
 
@@ -36,7 +40,10 @@ export function GoalCard({ goal }: GoalCardProps) {
       <Text style={styles.description}>{goal.description}</Text>
 
       <View style={styles.row}>
-        <Badge label={goal.status} tone={goal.status === "active" ? "success" : "default"} />
+        <Badge
+          label={goalStatusLabel(goal.status)}
+          tone={goal.status === "IN_PROGRESS" ? "success" : "default"}
+        />
         <Text style={styles.timeline}>{goal.timeline}</Text>
       </View>
 
@@ -44,11 +51,11 @@ export function GoalCard({ goal }: GoalCardProps) {
         <View
           style={[
             styles.progressFill,
-            { width: `${goal.progress}%`, backgroundColor: area.color },
+            { width: `${goal.progressPercentage}%`, backgroundColor: area.color },
           ]}
         />
       </View>
-      <Text style={styles.progressText}>{goal.progress}% progress</Text>
+      <Text style={styles.progressText}>{goal.progressPercentage}% progress</Text>
     </Pressable>
   );
 }

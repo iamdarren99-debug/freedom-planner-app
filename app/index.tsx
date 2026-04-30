@@ -1,15 +1,15 @@
-import { View, StyleSheet, Text } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { APP_NAME, APP_TAGLINE, AREA_META } from "../src/constants/app";
 import { theme } from "../src/constants/theme";
-import { useAppStore } from "../src/store/useAppStore";
-import { getDateKey, isFocusItemComplete, priorityRank } from "../src/utils/planning";
+import { GoalCard } from "../src/components/cards/GoalCard";
+import { StatCard } from "../src/components/cards/StatCard";
+import { EmptyState } from "../src/components/ui/EmptyState";
+import { FocusItemRow } from "../src/components/ui/FocusItemRow";
 import { Screen } from "../src/components/ui/Screen";
 import { SectionHeader } from "../src/components/ui/SectionHeader";
-import { StatCard } from "../src/components/cards/StatCard";
-import { GoalCard } from "../src/components/cards/GoalCard";
-import { FocusItemRow } from "../src/components/ui/FocusItemRow";
-import { EmptyState } from "../src/components/ui/EmptyState";
+import { useAppStore } from "../src/store/useAppStore";
+import { getDateKey, isFocusItemComplete, priorityRank } from "../src/utils/planning";
 
 export default function DashboardScreen() {
   const goals = useAppStore((state) => state.goals);
@@ -19,13 +19,15 @@ export default function DashboardScreen() {
   const topGoals = [...goals]
     .sort((a, b) => priorityRank(b.priority) - priorityRank(a.priority))
     .slice(0, 3);
-  const activeGoals = goals.filter((goal) => goal.status !== "planned");
+  const activeGoals = goals.filter(
+    (goal) => goal.status !== "COMPLETED" && goal.status !== "PAUSED",
+  );
   const todayCompletions = dailyCompletions[getDateKey()] ?? [];
 
   return (
     <Screen>
       <View style={styles.hero}>
-        <Text style={styles.eyebrow}>Phase 0</Text>
+        <Text style={styles.eyebrow}>Command center</Text>
         <Text style={styles.title}>{APP_NAME}</Text>
         <Text style={styles.subtitle}>{APP_TAGLINE}</Text>
       </View>
@@ -47,19 +49,19 @@ export default function DashboardScreen() {
       <SectionHeader
         eyebrow="Today"
         title="Daily focus loop"
-        subtitle="Check off the weekly focus items you actually move today."
+        subtitle="Check off the goal actions you actually move today."
       />
       <View style={styles.stack}>
         {activeGoals.length === 0 ? (
           <EmptyState
             title="No active goals"
-            description="Activate a goal first, then its weekly focus items can become daily execution steps."
+            description="Active goals will show their weekly actions here."
           />
         ) : (
           activeGoals.flatMap((goal) => {
-            const area = AREA_META[goal.area];
+            const area = AREA_META[goal.targetAreaId];
 
-            return goal.weeklyFocus.map((item) => (
+            return goal.weeklyActions.map((item) => (
               <FocusItemRow
                 key={`${goal.id}-${item}`}
                 accentColor={area.color}
@@ -76,11 +78,11 @@ export default function DashboardScreen() {
       <SectionHeader
         eyebrow="Snapshot"
         title="Target areas"
-        subtitle="A light command-center overview of the main pillars in your plan."
+        subtitle="A quick view of the pillars in your plan."
       />
       <View style={styles.areaGrid}>
         {Object.entries(AREA_META).map(([key, area]) => {
-          const areaGoals = goals.filter((goal) => goal.area === key);
+          const areaGoals = goals.filter((goal) => goal.targetAreaId === key);
 
           return (
             <View key={key} style={styles.areaCard}>
@@ -95,7 +97,7 @@ export default function DashboardScreen() {
       <SectionHeader
         eyebrow="Focus"
         title="Top goals"
-        subtitle="These cards prove the structure is working before we add more advanced features."
+        subtitle="The highest-priority goals seeded from your life plan."
       />
       <View style={styles.stack}>
         {topGoals.map((goal) => (
