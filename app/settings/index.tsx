@@ -8,7 +8,8 @@ import { SectionHeader } from "../../src/components/ui/SectionHeader";
 import { PrimaryButton } from "../../src/components/forms/PrimaryButton";
 
 export default function SettingsScreen() {
-  const resetDemoData = useAppStore((state) => state.resetDemoData);
+  const appSettings = useAppStore((state) => state.appSettings);
+  const resetToSeedData = useAppStore((state) => state.resetToSeedData);
 
   const confirmReset = () => {
     Alert.alert(
@@ -16,7 +17,7 @@ export default function SettingsScreen() {
       "This restores the seeded plan and clears local journal entries, task progress, and daily completions.",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Reset", style: "destructive", onPress: resetDemoData },
+        { text: "Reset", style: "destructive", onPress: resetToSeedData },
       ],
     );
   };
@@ -30,6 +31,16 @@ export default function SettingsScreen() {
       />
 
       <View style={styles.card}>
+        <Text style={styles.label}>Theme</Text>
+        <Text style={styles.value}>{appSettings.themeMode}</Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.label}>Daily focus limit</Text>
+        <Text style={styles.value}>{appSettings.dailyFocusLimit} actions</Text>
+      </View>
+
+      <View style={styles.card}>
         <Text style={styles.label}>Storage mode</Text>
         <Text style={styles.value}>Local-first with AsyncStorage</Text>
       </View>
@@ -39,7 +50,7 @@ export default function SettingsScreen() {
         <Text style={styles.value}>{APP_NAME}</Text>
       </View>
 
-      <PrimaryButton label="Reset demo data" onPress={confirmReset} />
+      <PrimaryButton label="Reset to seed data" onPress={confirmReset} />
     </Screen>
   );
 }

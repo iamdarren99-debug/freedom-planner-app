@@ -18,6 +18,7 @@ import {
 
 export default function DashboardScreen() {
   const goals = useAppStore((state) => state.goals);
+  const appSettings = useAppStore((state) => state.appSettings);
   const dailyCompletions = useAppStore((state) => state.dailyCompletions);
   const mindsetReminders = useAppStore((state) => state.mindsetReminders);
   const toggleFocusItem = useAppStore((state) => state.toggleFocusItem);
@@ -48,7 +49,7 @@ export default function DashboardScreen() {
         item,
       })),
     )
-    .slice(0, 5);
+    .slice(0, appSettings.dailyFocusLimit);
   const todayCompletions = dailyCompletions[getDateKey()] ?? [];
 
   return (

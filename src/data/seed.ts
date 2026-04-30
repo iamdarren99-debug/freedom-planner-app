@@ -1,4 +1,5 @@
 import {
+  AppSettings,
   Goal,
   JournalEntry,
   MindsetReminder,
@@ -11,6 +12,12 @@ import {
 
 const seedTimestamp = "2026-04-30T00:00:00.000Z";
 const seedDate = "2026-04-30";
+
+export const seedAppSettings: AppSettings = {
+  themeMode: "dark",
+  dailyFocusLimit: 5,
+  hasCompletedOnboarding: false,
+};
 
 type GoalSeedInput = Omit<Goal, "createdAt" | "updatedAt" | "status" | "progressPercentage"> &
   Partial<Pick<Goal, "status" | "progressPercentage">>;
