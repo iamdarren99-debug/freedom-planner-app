@@ -1,113 +1,234 @@
-import { StyleSheet, Text, View } from "react-native";
+import { useMemo, useState } from "react";
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
 
 import { AREA_META } from "../../../src/constants/app";
 import { theme } from "../../../src/constants/theme";
-import { useAppStore } from "../../../src/store/useAppStore";
-import { averageProgress, formatDate, goalsByArea } from "../../../src/utils/planning";
+import { PrimaryButton } from "../../../src/components/forms/PrimaryButton";
+import { TextField } from "../../../src/components/forms/TextField";
+import { ChoiceChip } from "../../../src/components/forms/ChoiceChip";
+import { Card } from "../../../src/components/ui/Card";
 import { Screen } from "../../../src/components/ui/Screen";
 import { SectionHeader } from "../../../src/components/ui/SectionHeader";
-import { Card } from "../../../src/components/ui/Card";
+import { GoalProgressGroup } from "../../../src/components/progress/GoalProgressGroup";
+import { MetricCard } from "../../../src/components/progress/MetricCard";
+import { ProgressBarRow } from "../../../src/components/progress/ProgressBarRow";
+import { useAppStore } from "../../../src/store/useAppStore";
+import { TargetAreaId } from "../../../src/types/planner";
+import {
+  averageProgress,
+  formatDate,
+  getDateKey,
+  goalsByArea,
+  isActiveGoal,
+} from "../../../src/utils/planning";
+import {
+  buildBusinessStats,
+  buildPersonalStats,
+  buildSkillsStats,
+  buildWeeklyStats,
+  clampPercent,
+} from "../../../src/utils/progressMetrics";
+
+const AREA_ORDER: TargetAreaId[] = [
+  "financial",
+  "career-business",
+  "skills",
+  "personal-relationship",
+];
 
 export default function ProgressScreen() {
   const goals = useAppStore((state) => state.goals);
+  const journalEntries = useAppStore((state) => state.journalEntries);
   const progressLogs = useAppStore((state) => state.progressLogs);
+  const tasks = useAppStore((state) => state.tasks);
+  const addProgressLog = useAppStore((state) => state.addProgressLog);
+
+  const [selectedGoalId, setSelectedGoalId] = useState(goals[0]?.id ?? "");
+  const [logDate, setLogDate] = useState(getDateKey);
+  const [logNote, setLogNote] = useState("");
+  const [logValue, setLogValue] = useState("");
+
+  const weeklyStats = useMemo(() => buildWeeklyStats(tasks), [tasks]);
+  const businessStats = useMemo(() => buildBusinessStats(tasks, goals), [goals, tasks]);
+  const skillsStats = useMemo(() => buildSkillsStats(tasks, goals), [goals, tasks]);
+  const personalStats = useMemo(
+    () => buildPersonalStats(tasks, goals, journalEntries),
+    [goals, journalEntries, tasks],
+  );
+
+  const selectedGoal = goals.find((goal) => goal.id === selectedGoalId) ?? goals[0];
+  const hasLogValue = logValue.trim().length > 0 && !Number.isNaN(Number(logValue));
+
+  const saveLog = () => {
+    const value = clampPercent(Number(logValue));
+
+    if (!selectedGoal || !hasLogValue) {
+      return;
+    }
+
+    addProgressLog({
+      goalId: selectedGoal.id,
+      date: logDate.trim() || getDateKey(),
+      value,
+      note: logNote.trim() || undefined,
+    });
+    setLogValue("");
+    setLogNote("");
+  };
 
   return (
-    <Screen>
-      <SectionHeader title="Progress overview" />
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "android" ? "height" : undefined}
+      style={styles.keyboardAvoidingView}
+    >
+      <Screen>
+        <SectionHeader title="Overall Progress" />
+        <View style={styles.grid}>
+          <MetricCard label="Active goals" value={goals.filter(isActiveGoal).length} />
+          <MetricCard label="Done this week" value={weeklyStats.completedTasks} />
+          <MetricCard label="Current streak" value={`${weeklyStats.currentStreak}d`} />
+          <MetricCard label="Consistency" value={`${weeklyStats.consistencyScore}%`} />
+        </View>
 
-      <Card style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Overall average</Text>
-        <Text style={styles.summaryValue}>{averageProgress(goals)}%</Text>
-      </Card>
+        <View style={styles.stack}>
+          {AREA_ORDER.map((areaId) => {
+            const area = AREA_META[areaId];
+            const progress = averageProgress(goalsByArea(goals, areaId));
 
-      <View style={styles.stack}>
-        {Object.entries(AREA_META).map(([key, area]) => {
-          const areaGoals = goalsByArea(goals, key as keyof typeof AREA_META);
-          const progress = averageProgress(areaGoals);
+            return (
+              <ProgressBarRow
+                color={area.color}
+                key={areaId}
+                label={area.label}
+                value={progress}
+              />
+            );
+          })}
+        </View>
 
-          return (
-            <Card key={key} style={styles.areaCard}>
-              <Text style={[styles.areaTitle, { color: area.color }]}>{area.label}</Text>
-              <Text style={styles.areaDescription}>{area.description}</Text>
-              <View style={styles.progressTrack}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    { width: `${progress}%`, backgroundColor: area.color },
-                  ]}
-                />
-              </View>
-              <Text style={styles.progressText}>{progress}% average progress</Text>
-            </Card>
-          );
-        })}
-      </View>
+        <SectionHeader title="Manual progress log" />
+        <Card style={styles.formCard}>
+          <Text style={styles.fieldLabel}>Goal</Text>
+          <View style={styles.chipRow}>
+            {goals.map((goal) => (
+              <ChoiceChip
+                active={(selectedGoal?.id ?? selectedGoalId) === goal.id}
+                key={goal.id}
+                label={goal.title}
+                onPress={() => setSelectedGoalId(goal.id)}
+              />
+            ))}
+          </View>
+          <View style={styles.formRow}>
+            <View style={styles.formField}>
+              <TextField
+                keyboardType="number-pad"
+                label="Value"
+                onChangeText={setLogValue}
+                placeholder="0-100"
+                value={logValue}
+              />
+            </View>
+            <View style={styles.formField}>
+              <TextField label="Date" onChangeText={setLogDate} value={logDate} />
+            </View>
+          </View>
+          <TextField
+            label="Note"
+            multiline
+            onChangeText={setLogNote}
+            placeholder="What moved?"
+            value={logNote}
+          />
+          <PrimaryButton
+            disabled={!selectedGoal || !hasLogValue}
+            label="Add progress log"
+            onPress={saveLog}
+          />
+        </Card>
 
-      <SectionHeader title="Recent progress logs" />
-      <View style={styles.stack}>
-        {progressLogs.slice(0, 5).map((log) => {
-          const goal = goals.find((item) => item.id === log.goalId);
+        <SectionHeader title="Financial Progress" />
+        <GoalProgressGroup
+          goals={goalsByArea(goals, "financial")}
+          logs={progressLogs}
+          titles={["Cash Stability", "Savings Growth", "Debt Freedom"]}
+        />
 
-          return (
-            <Card key={log.id} style={styles.logCard}>
-              <Text style={styles.logTitle}>{goal?.title ?? "Goal update"}</Text>
-              <Text style={styles.logMeta}>
-                {formatDate(log.date)} - {log.value}%
-              </Text>
-              {log.note ? <Text style={styles.logNote}>{log.note}</Text> : null}
-            </Card>
-          );
-        })}
-      </View>
-    </Screen>
+        <SectionHeader title="Career / Business Progress" />
+        <View style={styles.grid}>
+          <MetricCard label="Tools built" value={businessStats.toolsBuilt} />
+          <MetricCard label="Outreach count" value={businessStats.outreachCount} />
+          <MetricCard label="Paying clients" value={businessStats.payingClients} />
+          <MetricCard label="Side income" value={`${businessStats.sideIncomeProgress}%`} />
+        </View>
+
+        <SectionHeader title="Skills Progress" />
+        <View style={styles.grid}>
+          <MetricCard label="AI builds" value={skillsStats.aiBuilds} />
+          <MetricCard label="Study hours" value={skillsStats.studyHours} />
+          <MetricCard label="Business knowledge" value={`${skillsStats.businessKnowledge}%`} />
+          <MetricCard label="Execution speed" value={`${skillsStats.executionSpeed}%`} />
+        </View>
+
+        <SectionHeader title="Personal / Relationship Progress" />
+        <View style={styles.grid}>
+          <MetricCard label="Quality sessions" value={personalStats.qualitySessions} />
+          <MetricCard label="Travel planning" value={personalStats.travelPlanning} />
+          <MetricCard label="Reflection score" value={`${personalStats.reflectionScore}%`} />
+        </View>
+
+        <SectionHeader title="Recent progress logs" />
+        <View style={styles.stack}>
+          {progressLogs.slice(0, 6).map((log) => {
+            const goal = goals.find((item) => item.id === log.goalId);
+
+            return (
+              <Card key={log.id} style={styles.logCard}>
+                <Text style={styles.logTitle}>{goal?.title ?? "Goal update"}</Text>
+                <Text style={styles.logMeta}>
+                  {formatDate(log.date)} - {log.value}%
+                </Text>
+                {log.note ? <Text style={styles.logNote}>{log.note}</Text> : null}
+              </Card>
+            );
+          })}
+        </View>
+      </Screen>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  summaryCard: {
-    padding: theme.spacing.xl,
-    gap: theme.spacing.xs,
+  keyboardAvoidingView: {
+    flex: 1,
   },
-  summaryLabel: {
-    color: theme.colors.muted,
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  summaryValue: {
-    color: theme.colors.text,
-    fontSize: 34,
-    fontWeight: "800",
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing.md,
   },
   stack: {
     gap: theme.spacing.md,
   },
-  areaCard: {
-    gap: theme.spacing.sm,
+  formCard: {
+    gap: theme.spacing.md,
   },
-  areaTitle: {
-    fontSize: 18,
+  fieldLabel: {
+    color: theme.colors.text,
+    fontSize: 13,
     fontWeight: "800",
   },
-  areaDescription: {
-    color: theme.colors.muted,
-    fontSize: 14,
-    lineHeight: 20,
+  chipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing.sm,
   },
-  progressTrack: {
-    height: 10,
-    borderRadius: 999,
-    backgroundColor: theme.colors.surfaceAlt,
-    overflow: "hidden",
+  formRow: {
+    flexDirection: "row",
+    gap: theme.spacing.md,
   },
-  progressFill: {
-    height: "100%",
-    borderRadius: 999,
-  },
-  progressText: {
-    color: theme.colors.text,
-    fontSize: 12,
-    fontWeight: "700",
+  formField: {
+    flex: 1,
   },
   logCard: {
     gap: theme.spacing.xs,
