@@ -9,19 +9,46 @@ import { FocusItemRow } from "../src/components/ui/FocusItemRow";
 import { Screen } from "../src/components/ui/Screen";
 import { SectionHeader } from "../src/components/ui/SectionHeader";
 import { useAppStore } from "../src/store/useAppStore";
-import { getDateKey, isFocusItemComplete, priorityRank } from "../src/utils/planning";
+import {
+  getDateKey,
+  isActiveGoal,
+  isFocusItemComplete,
+  priorityRank,
+} from "../src/utils/planning";
 
 export default function DashboardScreen() {
   const goals = useAppStore((state) => state.goals);
   const dailyCompletions = useAppStore((state) => state.dailyCompletions);
+  const mindsetReminders = useAppStore((state) => state.mindsetReminders);
   const toggleFocusItem = useAppStore((state) => state.toggleFocusItem);
 
   const topGoals = [...goals]
-    .sort((a, b) => priorityRank(b.priority) - priorityRank(a.priority))
+    .sort((a, b) => {
+      const priorityDelta = priorityRank(b.priority) - priorityRank(a.priority);
+      if (priorityDelta !== 0) {
+        return priorityDelta;
+      }
+
+      return a.createdAt.localeCompare(b.createdAt) || a.title.localeCompare(b.title);
+    })
     .slice(0, 3);
-  const activeGoals = goals.filter(
-    (goal) => goal.status !== "COMPLETED" && goal.status !== "PAUSED",
-  );
+  const activeGoals = goals.filter(isActiveGoal);
+  const dailyFocusItems = [...activeGoals]
+    .sort((a, b) => {
+      const priorityDelta = priorityRank(b.priority) - priorityRank(a.priority);
+      if (priorityDelta !== 0) {
+        return priorityDelta;
+      }
+
+      return a.createdAt.localeCompare(b.createdAt) || a.title.localeCompare(b.title);
+    })
+    .flatMap((goal) =>
+      goal.weeklyActions.map((item) => ({
+        goal,
+        item,
+      })),
+    )
+    .slice(0, 5);
   const todayCompletions = dailyCompletions[getDateKey()] ?? [];
 
   return (
@@ -58,10 +85,10 @@ export default function DashboardScreen() {
             description="Active goals will show their weekly actions here."
           />
         ) : (
-          activeGoals.flatMap((goal) => {
+          dailyFocusItems.map(({ goal, item }) => {
             const area = AREA_META[goal.targetAreaId];
 
-            return goal.weeklyActions.map((item) => (
+            return (
               <FocusItemRow
                 key={`${goal.id}-${item}`}
                 accentColor={area.color}
@@ -70,7 +97,7 @@ export default function DashboardScreen() {
                 item={item}
                 onPress={() => toggleFocusItem(goal.id, item)}
               />
-            ));
+            );
           })
         )}
       </View>
@@ -102,6 +129,21 @@ export default function DashboardScreen() {
       <View style={styles.stack}>
         {topGoals.map((goal) => (
           <GoalCard key={goal.id} goal={goal} />
+        ))}
+      </View>
+
+      <SectionHeader
+        eyebrow="Mindset"
+        title="Stay honest"
+        subtitle="Reminders from the plan when momentum gets noisy."
+      />
+      <View style={styles.stack}>
+        {mindsetReminders.slice(0, 4).map((reminder) => (
+          <View key={reminder.id} style={styles.reminderCard}>
+            <Text style={styles.reminderCategory}>{reminder.category.replaceAll("_", " ")}</Text>
+            <Text style={styles.reminderTitle}>{reminder.title}</Text>
+            <Text style={styles.reminderDescription}>{reminder.description}</Text>
+          </View>
         ))}
       </View>
     </Screen>
@@ -165,5 +207,30 @@ const styles = StyleSheet.create({
   },
   stack: {
     gap: theme.spacing.md,
+  },
+  reminderCard: {
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.xs,
+  },
+  reminderCategory: {
+    color: theme.colors.accent,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  reminderTitle: {
+    color: theme.colors.text,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  reminderDescription: {
+    color: theme.colors.muted,
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

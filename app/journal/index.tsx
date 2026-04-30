@@ -24,7 +24,7 @@ export default function JournalScreen() {
       <SectionHeader
         eyebrow="Journal"
         title="Quick reflection"
-        subtitle="A small local-first journal flow is enough for the base app."
+        subtitle="Capture wins, friction, and the next move while it is fresh."
       />
 
       <View style={styles.panel}>
@@ -59,12 +59,12 @@ export default function JournalScreen() {
         />
       </View>
 
-      <SectionHeader title="Recent entries" subtitle="Stored locally so the app works before any backend exists." />
+      <SectionHeader title="Recent entries" subtitle="Your reflections stay on this device." />
       <View style={styles.stack}>
         {journalEntries.length === 0 ? (
           <EmptyState
             title="No entries yet"
-            description="The journal screen is ready for basic capture, but there is no data to show yet."
+            description="Add a quick reflection when you finish a meaningful block."
           />
         ) : (
           journalEntries.map((entry) => (

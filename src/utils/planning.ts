@@ -42,7 +42,7 @@ export function priorityRank(priority: GoalPriority) {
 }
 
 export function goalStatusLabel(status: Goal["status"]) {
-  return status.replace("_", " ").toLowerCase();
+  return status.replaceAll("_", " ").toLowerCase();
 }
 
 export function isActiveGoal(goal: Goal) {

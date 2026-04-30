@@ -12,188 +12,166 @@ import {
 const seedTimestamp = "2026-04-30T00:00:00.000Z";
 const seedDate = "2026-04-30";
 
-function goal(input: Omit<Goal, "createdAt" | "updatedAt" | "status" | "progressPercentage">): Goal {
+type GoalSeedInput = Omit<Goal, "createdAt" | "updatedAt" | "status" | "progressPercentage"> &
+  Partial<Pick<Goal, "status" | "progressPercentage">>;
+
+function goal(input: GoalSeedInput): Goal {
   return {
     ...input,
-    status: "NOT_STARTED",
-    progressPercentage: 0,
+    status: input.status ?? "NOT_STARTED",
+    progressPercentage: input.progressPercentage ?? 0,
     createdAt: seedTimestamp,
     updatedAt: seedTimestamp,
   };
 }
 
 export const seedTargetAreas: TargetArea[] = [
-  {
-    id: "financial",
-    name: "Financial",
-    description: "Build wealth and financial freedom.",
-    icon: "cash-multiple",
-    color: "#79D66B",
-    goals: [
-      goal({
-        id: "cash-stability",
-        targetAreaId: "financial",
-        title: "Cash Stability",
-        description: "Remove financial pressure.",
-        timeline: "1-3 months",
-        executionMethod: ["Tight expense control", "Cash flow tracking"],
-        weeklyActions: ["Track daily spending for 5 min", "Reduce BNPL"],
-        successMetric: "RM500 monthly surplus",
-        priority: "HIGH",
-      }),
-      goal({
-        id: "savings-growth",
-        targetAreaId: "financial",
-        title: "Savings Growth",
-        description: "Reach RM10,000.",
-        timeline: "6 months",
-        executionMethod: ["Increase income", "Build 1 income stream"],
-        weeklyActions: ["Build 1 income stream", "Improve monetizable skills"],
-        successMetric: "RM1.5k-2k extra/month",
-        priority: "HIGH",
-      }),
-      goal({
-        id: "debt-freedom",
-        targetAreaId: "financial",
-        title: "Debt Freedom",
-        description: "Clear BNPL and loan.",
-        timeline: "6-12 months",
-        executionMethod: ["Snowball repayment", "Pay smallest debt first aggressively"],
-        weeklyActions: ["List all debts", "Pay smallest first", "No new debt"],
-        successMetric: "0 consumer debt",
-        priority: "HIGH",
-      }),
-    ],
-  },
-  {
-    id: "career-business",
-    name: "Career / Business",
-    description: "Create income and build ownership.",
-    icon: "briefcase-outline",
-    color: "#61AFFF",
-    goals: [
-      goal({
-        id: "skill-leverage",
-        targetAreaId: "career-business",
-        title: "Skill Leverage",
-        description: "Monetize AI and systems thinking.",
-        timeline: "1-3 months",
-        executionMethod: ["Turn AI into service", "Build real tools and systems"],
-        weeklyActions: ["Build 1 useful tool weekly", "Solve real problems"],
-        successMetric: "3-5 working demos",
-        priority: "HIGH",
-      }),
-      goal({
-        id: "side-income",
-        targetAreaId: "career-business",
-        title: "Side Income",
-        description: "First RM1k/month.",
-        timeline: "3 months",
-        executionMethod: ["Offer service to SMEs", "Outreach and deliver value"],
-        weeklyActions: ["Outreach 10 people per week", "Deliver value"],
-        successMetric: "First paying client",
-        priority: "HIGH",
-      }),
-      goal({
-        id: "business-validation",
-        targetAreaId: "career-business",
-        title: "Business Validation",
-        description: "Test import/distribution or service.",
-        timeline: "6-12 months",
-        executionMethod: ["Small experiments", "Low-risk testing", "Review and improve"],
-        weeklyActions: ["Launch 1 test per month", "Review and improve"],
-        successMetric: "1 profitable idea",
-        priority: "MEDIUM",
-      }),
-      goal({
-        id: "ownership",
-        targetAreaId: "career-business",
-        title: "Ownership",
-        description: "Run your own business.",
-        timeline: "1-3 years",
-        executionMethod: ["Scale proven model", "Reinvest profits", "Build systems"],
-        weeklyActions: ["Improve systems", "Reinvest", "Build team or partners"],
-        successMetric: "RM5k+/month profit",
-        priority: "HIGH",
-      }),
-    ],
-  },
-  {
-    id: "skills",
-    name: "Skills",
-    description: "Build leverage and increase value.",
-    icon: "brain",
-    color: "#C27CFF",
-    goals: [
-      goal({
-        id: "ai-utilization",
-        targetAreaId: "skills",
-        title: "AI Utilization",
-        description: "Become problem solver with AI.",
-        timeline: "3 months",
-        executionMethod: ["Build real use cases", "Use AI daily", "Solve problems"],
-        weeklyActions: ["3 builds/week", "Learn by doing"],
-        successMetric: "Portfolio of AI tools",
-        priority: "HIGH",
-      }),
-      goal({
-        id: "business-knowledge",
-        targetAreaId: "skills",
-        title: "Business Knowledge",
-        description: "Operations and legal basics.",
-        timeline: "6 months",
-        executionMethod: ["Learn while building", "Apply directly"],
-        weeklyActions: ["Study 2 hours/week", "Implement what you learn"],
-        successMetric: "Can run small business",
-        priority: "MEDIUM",
-      }),
-      goal({
-        id: "execution-speed",
-        targetAreaId: "skills",
-        title: "Execution Speed",
-        description: "Ship fast.",
-        timeline: "Ongoing",
-        executionMethod: ["Build over perfect", "Focus on done"],
-        weeklyActions: ["Finish 1 thing/week", "Improve and ship"],
-        successMetric: "Consistency over perfection",
-        priority: "HIGH",
-      }),
-    ],
-  },
-  {
-    id: "personal-relationship",
-    name: "Personal / Relationship",
-    description: "Live a balanced and fulfilling life.",
-    icon: "heart-outline",
-    color: "#FF7FA4",
-    goals: [
-      goal({
-        id: "relationship",
-        targetAreaId: "personal-relationship",
-        title: "Relationship",
-        description: "Strengthen current relationship.",
-        timeline: "Ongoing",
-        executionMethod: ["Intentional time", "Better communication", "Show up"],
-        weeklyActions: ["1 quality session per week", "Communicate openly"],
-        successMetric: "Better connection",
-        priority: "MEDIUM",
-      }),
-      goal({
-        id: "lifestyle",
-        targetAreaId: "personal-relationship",
-        title: "Lifestyle",
-        description: "Travel 1-2x/year.",
-        timeline: "1-2 years",
-        executionMethod: ["Budget ahead", "Plan ahead", "Create travel fund"],
-        weeklyActions: ["Save consistently", "Plan trips early"],
-        successMetric: "1-2 trips per year",
-        priority: "LOW",
-      }),
-    ],
-  },
+  { id: "financial" },
+  { id: "career-business" },
+  { id: "skills" },
+  { id: "personal-relationship" },
 ];
 
-export const seedGoals: Goal[] = seedTargetAreas.flatMap((targetArea) => targetArea.goals);
+export const seedGoals: Goal[] = [
+  goal({
+    id: "cash-stability",
+    targetAreaId: "financial",
+    title: "Cash Stability",
+    description: "Remove financial pressure.",
+    timeline: "1-3 months",
+    executionMethod: ["Tight expense control", "Cash flow tracking"],
+    weeklyActions: ["Track daily spending for 5 min", "Reduce BNPL"],
+    successMetric: "RM500 monthly surplus",
+    priority: "HIGH",
+    status: "IN_PROGRESS",
+  }),
+  goal({
+    id: "savings-growth",
+    targetAreaId: "financial",
+    title: "Savings Growth",
+    description: "Reach RM10,000.",
+    timeline: "6 months",
+    executionMethod: ["Increase income", "Build 1 income stream"],
+    weeklyActions: ["Build 1 income stream", "Improve monetizable skills"],
+    successMetric: "RM1.5k-2k extra/month",
+    priority: "HIGH",
+  }),
+  goal({
+    id: "debt-freedom",
+    targetAreaId: "financial",
+    title: "Debt Freedom",
+    description: "Clear BNPL and loan.",
+    timeline: "6-12 months",
+    executionMethod: ["Snowball repayment", "Pay smallest debt first aggressively"],
+    weeklyActions: ["List all debts", "Pay smallest first", "No new debt"],
+    successMetric: "0 consumer debt",
+    priority: "HIGH",
+  }),
+  goal({
+    id: "skill-leverage",
+    targetAreaId: "career-business",
+    title: "Skill Leverage",
+    description: "Monetize AI and systems thinking.",
+    timeline: "1-3 months",
+    executionMethod: ["Turn AI into service", "Build real tools and systems"],
+    weeklyActions: ["Build 1 useful tool weekly", "Solve real problems"],
+    successMetric: "3-5 working demos",
+    priority: "HIGH",
+    status: "IN_PROGRESS",
+  }),
+  goal({
+    id: "side-income",
+    targetAreaId: "career-business",
+    title: "Side Income",
+    description: "First RM1k/month.",
+    timeline: "3 months",
+    executionMethod: ["Offer service to SMEs", "Outreach and deliver value"],
+    weeklyActions: ["Outreach 10 people per week", "Deliver value"],
+    successMetric: "First paying client",
+    priority: "HIGH",
+    status: "IN_PROGRESS",
+  }),
+  goal({
+    id: "business-validation",
+    targetAreaId: "career-business",
+    title: "Business Validation",
+    description: "Test import/distribution or service.",
+    timeline: "6-12 months",
+    executionMethod: ["Small experiments", "Low-risk testing", "Review and improve"],
+    weeklyActions: ["Launch 1 test per month", "Review and improve"],
+    successMetric: "1 profitable idea",
+    priority: "MEDIUM",
+  }),
+  goal({
+    id: "ownership",
+    targetAreaId: "career-business",
+    title: "Ownership",
+    description: "Run your own business.",
+    timeline: "1-3 years",
+    executionMethod: ["Scale proven model", "Reinvest profits", "Build systems"],
+    weeklyActions: ["Improve systems", "Reinvest", "Build team or partners"],
+    successMetric: "RM5k+/month profit",
+    priority: "HIGH",
+  }),
+  goal({
+    id: "ai-utilization",
+    targetAreaId: "skills",
+    title: "AI Utilization",
+    description: "Become problem solver with AI.",
+    timeline: "3 months",
+    executionMethod: ["Build real use cases", "Use AI daily", "Solve problems"],
+    weeklyActions: ["3 builds/week", "Learn by doing"],
+    successMetric: "Portfolio of AI tools",
+    priority: "HIGH",
+    status: "IN_PROGRESS",
+  }),
+  goal({
+    id: "business-knowledge",
+    targetAreaId: "skills",
+    title: "Business Knowledge",
+    description: "Operations and legal basics.",
+    timeline: "6 months",
+    executionMethod: ["Learn while building", "Apply directly"],
+    weeklyActions: ["Study 2 hours/week", "Implement what you learn"],
+    successMetric: "Can run small business",
+    priority: "MEDIUM",
+  }),
+  goal({
+    id: "execution-speed",
+    targetAreaId: "skills",
+    title: "Execution Speed",
+    description: "Ship fast.",
+    timeline: "Ongoing",
+    executionMethod: ["Build over perfect", "Focus on done"],
+    weeklyActions: ["Finish 1 thing/week", "Improve and ship"],
+    successMetric: "Consistency over perfection",
+    priority: "HIGH",
+    status: "IN_PROGRESS",
+  }),
+  goal({
+    id: "relationship",
+    targetAreaId: "personal-relationship",
+    title: "Relationship",
+    description: "Strengthen current relationship.",
+    timeline: "Ongoing",
+    executionMethod: ["Intentional time", "Better communication", "Show up"],
+    weeklyActions: ["1 quality session per week", "Communicate openly"],
+    successMetric: "Better connection",
+    priority: "MEDIUM",
+    status: "IN_PROGRESS",
+  }),
+  goal({
+    id: "lifestyle",
+    targetAreaId: "personal-relationship",
+    title: "Lifestyle",
+    description: "Travel 1-2x/year.",
+    timeline: "1-2 years",
+    executionMethod: ["Budget ahead", "Plan ahead", "Create travel fund"],
+    weeklyActions: ["Save consistently", "Plan trips early"],
+    successMetric: "1-2 trips per year",
+    priority: "LOW",
+  }),
+];
 
 export const seedTasks: Task[] = seedGoals.flatMap((seedGoal) =>
   seedGoal.weeklyActions.map((action, index) => ({
@@ -207,6 +185,10 @@ export const seedTasks: Task[] = seedGoals.flatMap((seedGoal) =>
     createdAt: seedTimestamp,
     updatedAt: seedTimestamp,
   })),
+);
+
+const cashStabilityTrackingTask = seedTasks.find(
+  (task) => task.goalId === "cash-stability" && task.title === "Track daily spending for 5 min",
 );
 
 export const seedJournalEntries: JournalEntry[] = [
@@ -229,7 +211,7 @@ export const seedJournalEntries: JournalEntry[] = [
     content: "Tracking daily spending creates control before bigger income moves land.",
     mood: "clear",
     linkedGoalIds: ["cash-stability"],
-    linkedTaskIds: ["task-cash-stability-1"],
+    linkedTaskIds: cashStabilityTrackingTask ? [cashStabilityTrackingTask.id] : [],
     progressReflection: "Five minutes of tracking keeps financial pressure visible.",
     createdAt: seedTimestamp,
     updatedAt: seedTimestamp,
@@ -254,9 +236,7 @@ export const seedProgressLogs: ProgressLog[] = [
 ];
 
 export const seedWeeklySystem: WeeklySystem = {
-  weekdayMorning: [
-    "Morning 1 hr: learn or research AI/business.",
-  ],
+  weekdayMorning: ["Morning 1 hr: learn or research AI/business."],
   weekdayNight: [
     "Night 2-3 hrs: build something.",
     "Improve something.",
@@ -280,23 +260,14 @@ export const seedWeeklySystem: WeeklySystem = {
 };
 
 export const seedThirtyDayPlan: ThirtyDayPlan = {
-  week1To2: [
-    "Build 2 simple tools.",
-    "Sales tracker.",
-    "Expense dashboard.",
-  ],
-  week3: [
-    "Package it as a simple system to track cafe performance.",
-  ],
+  week1To2: ["Build 2 simple tools.", "Sales tracker.", "Expense dashboard."],
+  week3: ["Package it as a simple system to track cafe performance."],
   week4: [
     "Reach out to 10-20 cafes or small businesses.",
     "Offer free setup.",
     "Convert to paid.",
   ],
-  finalGoal: [
-    "First paying clients.",
-    "First RM1k+/month extra income.",
-  ],
+  finalGoal: ["First paying clients.", "First RM1k+/month extra income."],
 };
 
 export const seedMindsetReminders: MindsetReminder[] = [

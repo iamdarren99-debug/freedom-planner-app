@@ -8,6 +8,11 @@ import { useAppStore } from "../../src/store/useAppStore";
 export default function PlannerScreen() {
   const weeklySystem = useAppStore((state) => state.weeklySystem);
   const thirtyDayPlan = useAppStore((state) => state.thirtyDayPlan);
+  const tasks = useAppStore((state) => state.tasks);
+  const focusTasks = tasks
+    .filter((task) => task.status === "TODO")
+    .slice(0, 5)
+    .map((task) => task.title);
 
   return (
     <Screen>
@@ -18,6 +23,7 @@ export default function PlannerScreen() {
       />
 
       <View style={{ gap: 14 }}>
+        <PlannerCard title="Focus tasks" meta="Seeded from weekly actions" items={focusTasks} />
         <PlannerCard title="Weekday morning" meta="Learning" items={weeklySystem.weekdayMorning} />
         <PlannerCard title="Weekday night" meta="Building" items={weeklySystem.weekdayNight} />
         <PlannerCard title="Off day plan" meta="Execution" items={weeklySystem.offDayPlan} />

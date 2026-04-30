@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 
 import { APP_NAME } from "../../src/constants/app";
 import { theme } from "../../src/constants/theme";
@@ -8,21 +8,26 @@ import { SectionHeader } from "../../src/components/ui/SectionHeader";
 import { PrimaryButton } from "../../src/components/forms/PrimaryButton";
 
 export default function SettingsScreen() {
-  const themeMode = useAppStore((state) => state.themeMode);
   const resetDemoData = useAppStore((state) => state.resetDemoData);
+
+  const confirmReset = () => {
+    Alert.alert(
+      "Reset all data?",
+      "This restores the seeded plan and clears local journal entries, task progress, and daily completions.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Reset", style: "destructive", onPress: resetDemoData },
+      ],
+    );
+  };
 
   return (
     <Screen>
       <SectionHeader
         eyebrow="Settings"
-        title="Base app settings"
-        subtitle="This screen confirms the project is ready for future preferences and sync controls."
+        title="App settings"
+        subtitle="Local controls for the Android-first planner."
       />
-
-      <View style={styles.card}>
-        <Text style={styles.label}>Theme</Text>
-        <Text style={styles.value}>{themeMode}</Text>
-      </View>
 
       <View style={styles.card}>
         <Text style={styles.label}>Storage mode</Text>
@@ -34,7 +39,7 @@ export default function SettingsScreen() {
         <Text style={styles.value}>{APP_NAME}</Text>
       </View>
 
-      <PrimaryButton label="Reset demo data" onPress={resetDemoData} />
+      <PrimaryButton label="Reset demo data" onPress={confirmReset} />
     </Screen>
   );
 }

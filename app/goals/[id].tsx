@@ -46,7 +46,11 @@ export default function GoalDetailScreen() {
       </View>
 
       <View style={styles.panel}>
-        <SectionHeader title="Execution method" subtitle={goal.successMetric} />
+        <SectionHeader title="Execution method" />
+        <View style={styles.metricBox}>
+          <Text style={styles.metricLabel}>Success metric</Text>
+          <Text style={styles.metricValue}>{goal.successMetric}</Text>
+        </View>
         <View style={styles.list}>
           {goal.executionMethod.map((item) => (
             <Text key={item} style={styles.item}>
@@ -68,7 +72,7 @@ export default function GoalDetailScreen() {
       </View>
 
       <View style={styles.panel}>
-        <SectionHeader title="Current progress" subtitle="Goal progress from the data model." />
+        <SectionHeader title="Current progress" subtitle="Updated by completed focus actions." />
         <View style={styles.progressTrack}>
           <View
             style={[
@@ -123,6 +127,24 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: theme.spacing.sm,
+  },
+  metricBox: {
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.surfaceAlt,
+    padding: theme.spacing.md,
+    gap: 4,
+  },
+  metricLabel: {
+    color: theme.colors.muted,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  metricValue: {
+    color: theme.colors.text,
+    fontSize: 15,
+    fontWeight: "800",
   },
   item: {
     color: theme.colors.muted,

@@ -13,7 +13,8 @@
       "typedRoutes": true
     },
     "android": {
-      "package": "com.iamdarren.freedomplanner"
+      "package": "com.iamdarren.freedomplanner",
+      "softwareKeyboardLayoutMode": "pan"
     }
   }
 }

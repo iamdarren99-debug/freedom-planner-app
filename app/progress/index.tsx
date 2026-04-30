@@ -3,19 +3,20 @@ import { StyleSheet, Text, View } from "react-native";
 import { AREA_META } from "../../src/constants/app";
 import { theme } from "../../src/constants/theme";
 import { useAppStore } from "../../src/store/useAppStore";
-import { averageProgress, goalsByArea } from "../../src/utils/planning";
+import { averageProgress, formatDate, goalsByArea } from "../../src/utils/planning";
 import { Screen } from "../../src/components/ui/Screen";
 import { SectionHeader } from "../../src/components/ui/SectionHeader";
 
 export default function ProgressScreen() {
   const goals = useAppStore((state) => state.goals);
+  const progressLogs = useAppStore((state) => state.progressLogs);
 
   return (
     <Screen>
       <SectionHeader
         eyebrow="Progress"
         title="Progress overview"
-        subtitle="This screen stays intentionally simple in Phase 0: just enough to validate the shape."
+        subtitle="Daily focus completions roll up into goal progress."
       />
 
       <View style={styles.summaryCard}>
@@ -41,6 +42,23 @@ export default function ProgressScreen() {
                 />
               </View>
               <Text style={styles.progressText}>{progress}% average progress</Text>
+            </View>
+          );
+        })}
+      </View>
+
+      <SectionHeader title="Recent progress logs" subtitle="The latest updates from daily action." />
+      <View style={styles.stack}>
+        {progressLogs.slice(0, 5).map((log) => {
+          const goal = goals.find((item) => item.id === log.goalId);
+
+          return (
+            <View key={log.id} style={styles.logCard}>
+              <Text style={styles.logTitle}>{goal?.title ?? "Goal update"}</Text>
+              <Text style={styles.logMeta}>
+                {formatDate(log.date)} · {log.value}%
+              </Text>
+              {log.note ? <Text style={styles.logNote}>{log.note}</Text> : null}
             </View>
           );
         })}
@@ -102,5 +120,28 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontSize: 12,
     fontWeight: "700",
+  },
+  logCard: {
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.xs,
+  },
+  logTitle: {
+    color: theme.colors.text,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  logMeta: {
+    color: theme.colors.primary,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  logNote: {
+    color: theme.colors.muted,
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

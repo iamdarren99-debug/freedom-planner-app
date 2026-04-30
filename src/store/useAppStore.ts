@@ -37,7 +37,6 @@ interface AppState {
   thirtyDayPlan: ThirtyDayPlan;
   mindsetReminders: MindsetReminder[];
   dailyCompletions: DailyCompletionsByDate;
-  themeMode: "dark";
   hasHydrated: boolean;
 }
 
@@ -60,9 +59,12 @@ const initialState: AppState = {
   thirtyDayPlan: seedThirtyDayPlan,
   mindsetReminders: seedMindsetReminders,
   dailyCompletions: {},
-  themeMode: "dark",
   hasHydrated: false,
 };
+
+function clampProgress(value: number) {
+  return Math.min(100, Math.max(0, value));
+}
 
 export const useAppStore = create<AppStore>()(
   persist(
@@ -92,10 +94,42 @@ export const useAppStore = create<AppStore>()(
       toggleFocusItem: (goalId, item) =>
         set((state) => {
           const todayKey = getDateKey();
+          const now = new Date();
           const todayCompletions = state.dailyCompletions[todayKey] ?? [];
           const alreadyComplete = isFocusItemComplete(todayCompletions, goalId, item);
+          const goal = state.goals.find((candidate) => candidate.id === goalId);
+          const nextProgress = goal
+            ? clampProgress(goal.progressPercentage + (alreadyComplete ? -1 : 1))
+            : 0;
 
           return {
+            goals: state.goals.map((candidate) =>
+              candidate.id === goalId
+                ? {
+                    ...candidate,
+                    status:
+                      !alreadyComplete && candidate.status === "NOT_STARTED"
+                        ? "IN_PROGRESS"
+                        : candidate.status,
+                    progressPercentage: nextProgress,
+                    updatedAt: now.toISOString(),
+                  }
+                : candidate,
+            ),
+            progressLogs: goal
+              ? [
+                  {
+                    id: createId("progress"),
+                    goalId,
+                    date: todayKey,
+                    value: nextProgress,
+                    note: alreadyComplete
+                      ? `Unchecked daily focus: ${item}`
+                      : `Completed daily focus: ${item}`,
+                  },
+                  ...state.progressLogs,
+                ]
+              : state.progressLogs,
             dailyCompletions: {
               ...state.dailyCompletions,
               [todayKey]: alreadyComplete
@@ -108,7 +142,7 @@ export const useAppStore = create<AppStore>()(
                     {
                       goalId,
                       item,
-                      completedAt: new Date().toISOString(),
+                      completedAt: now.toISOString(),
                     },
                   ],
             },
@@ -130,21 +164,16 @@ export const useAppStore = create<AppStore>()(
         thirtyDayPlan: state.thirtyDayPlan,
         mindsetReminders: state.mindsetReminders,
         dailyCompletions: state.dailyCompletions,
-        themeMode: state.themeMode,
       }),
-      migrate: () => initialState,
+      // TODO: Replace this with real per-version migrators before the next schema bump.
+      migrate: (persisted) => persisted as AppState,
       onRehydrateStorage: () => (state, error) => {
         if (error) {
           console.warn("Failed to rehydrate planner storage", error);
           AsyncStorage.removeItem(PERSIST_KEY).catch(() => undefined);
         }
 
-        if (state) {
-          state.setHasHydrated(true);
-          return;
-        }
-
-        useAppStore.setState({ hasHydrated: true });
+        state?.setHasHydrated(true);
       },
     },
   ),

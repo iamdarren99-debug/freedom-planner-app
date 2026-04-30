@@ -6,11 +6,6 @@ export type MindsetReminderCategory = "STOP" | "TRUTH" | "LONG_TERM_VISION";
 
 export interface TargetArea {
   id: TargetAreaId;
-  name: string;
-  description: string;
-  icon: string;
-  color: string;
-  goals: Goal[];
 }
 
 export interface Goal {
