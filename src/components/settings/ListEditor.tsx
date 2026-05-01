@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import { TextField } from "../forms/TextField";
 
 export function ListEditor({
@@ -9,12 +11,19 @@ export function ListEditor({
   onChange: (value: string[]) => void;
   value: string[];
 }) {
+  const [draft, setDraft] = useState(value.join("\n"));
+
+  useEffect(() => {
+    setDraft(value.join("\n"));
+  }, [value]);
+
   return (
     <TextField
       label={label}
       multiline
-      onChangeText={(text) => onChange(linesFromText(text))}
-      value={value.join("\n")}
+      onBlur={() => onChange(linesFromText(draft))}
+      onChangeText={setDraft}
+      value={draft}
     />
   );
 }

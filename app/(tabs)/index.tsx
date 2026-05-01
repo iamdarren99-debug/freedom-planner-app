@@ -11,6 +11,7 @@ import { Screen } from "../../src/components/ui/Screen";
 import { SectionHeader } from "../../src/components/ui/SectionHeader";
 import { useAppStore } from "../../src/store/useAppStore";
 import { getAreaMeta } from "../../src/utils/areaMeta";
+import { safeColor } from "../../src/utils/colors";
 import { formatDate, getDateKey, priorityRank } from "../../src/utils/planning";
 import { Goal, MindsetReminder, Task } from "../../src/types/planner";
 
@@ -154,7 +155,7 @@ function TodayTaskCard({
 }) {
   const appSettings = useAppStore((state) => state.appSettings);
   const area = goal ? getAreaMeta(goal.targetAreaId, appSettings) : undefined;
-  const accentColor = area?.color ?? appSettings.themeAccentColor ?? theme.colors.primary;
+  const accentColor = area?.color ?? safeColor(appSettings.themeAccentColor, theme.colors.primary);
 
   return (
     <Card style={styles.taskCard}>

@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text } from "react-native";
 
 import { theme } from "../../constants/theme";
 import { useAppStore } from "../../store/useAppStore";
+import { safeColor } from "../../utils/colors";
 
 interface PrimaryButtonProps {
   label: string;
@@ -11,6 +12,7 @@ interface PrimaryButtonProps {
 
 export function PrimaryButton({ label, onPress, disabled = false }: PrimaryButtonProps) {
   const accentColor = useAppStore((state) => state.appSettings.themeAccentColor);
+  const buttonColor = safeColor(accentColor, theme.colors.primary);
 
   return (
     <Pressable
@@ -19,7 +21,7 @@ export function PrimaryButton({ label, onPress, disabled = false }: PrimaryButto
       style={({ pressed }) => [
         styles.button,
         {
-          backgroundColor: accentColor || theme.colors.primary,
+          backgroundColor: buttonColor,
           opacity: pressed ? 0.94 : disabled ? 0.6 : 1,
         },
       ]}

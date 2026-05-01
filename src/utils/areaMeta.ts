@@ -1,5 +1,6 @@
 import { AREA_META } from "../constants/app";
 import { AppSettings, TargetAreaId } from "../types/planner";
+import { safeColor } from "./colors";
 
 export function getAreaMeta(areaId: TargetAreaId, appSettings?: AppSettings) {
   const base = AREA_META[areaId];
@@ -8,7 +9,7 @@ export function getAreaMeta(areaId: TargetAreaId, appSettings?: AppSettings) {
   return {
     ...base,
     ...override,
-    color: override?.color?.trim() || base.color,
+    color: safeColor(override?.color, base.color),
     description: override?.description?.trim() || base.description,
     label: override?.label?.trim() || base.label,
   };

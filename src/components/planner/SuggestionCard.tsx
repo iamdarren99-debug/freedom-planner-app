@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { theme } from "../../constants/theme";
 import { Goal } from "../../types/planner";
 import { getAreaMeta } from "../../utils/areaMeta";
+import { safeColor } from "../../utils/colors";
 import { TaskSuggestion } from "../../utils/suggestions";
 import { useAppStore } from "../../store/useAppStore";
 import { Card } from "../ui/Card";
@@ -17,7 +18,7 @@ export function SuggestionCard({ goal, onAdd, suggestion }: SuggestionCardProps)
   const appSettings = useAppStore((state) => state.appSettings);
   const accentColor = goal
     ? getAreaMeta(goal.targetAreaId, appSettings).color
-    : appSettings.themeAccentColor || theme.colors.primary;
+    : safeColor(appSettings.themeAccentColor, theme.colors.primary);
 
   return (
     <Card accent={accentColor} style={styles.suggestionCard}>

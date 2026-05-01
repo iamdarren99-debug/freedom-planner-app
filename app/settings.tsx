@@ -6,6 +6,7 @@ import { theme } from "../src/constants/theme";
 import { PrimaryButton } from "../src/components/forms/PrimaryButton";
 import { SmallAction } from "../src/components/forms/SmallAction";
 import { TextField } from "../src/components/forms/TextField";
+import { ColorField } from "../src/components/settings/ColorField";
 import { Card } from "../src/components/ui/Card";
 import { Screen } from "../src/components/ui/Screen";
 import { SectionHeader } from "../src/components/ui/SectionHeader";
@@ -184,9 +185,9 @@ export default function SettingsScreen() {
 
       <Card style={styles.card}>
         <Text style={styles.label}>Theme accent color</Text>
-        <TextField
+        <ColorField
           label="Primary accent"
-          onChangeText={(themeAccentColor) => updateAppSettings({ themeAccentColor })}
+          onCommit={(themeAccentColor) => updateAppSettings({ themeAccentColor })}
           placeholder="Color name or hex value"
           value={appSettings.themeAccentColor ?? ""}
         />
@@ -210,9 +211,9 @@ export default function SettingsScreen() {
               onChangeText={(description) => updateTargetArea(areaId, { description })}
               value={area.description}
             />
-            <TextField
+            <ColorField
               label="Color"
-              onChangeText={(color) => updateTargetArea(areaId, { color })}
+              onCommit={(color) => updateTargetArea(areaId, { color })}
               value={area.color}
             />
           </Card>

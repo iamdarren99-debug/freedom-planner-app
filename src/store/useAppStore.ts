@@ -26,6 +26,7 @@ import {
   ThirtyDayPlan,
   WeeklySystem,
 } from "../types/planner";
+import { isValidColor } from "../utils/colors";
 
 const PERSIST_KEY = "freedom-planner";
 const MAX_JOURNAL_ENTRIES = 500;
@@ -158,12 +159,200 @@ function isOptionalArray(value: unknown) {
   return value === undefined || Array.isArray(value);
 }
 
-function hasValidFirstId(value: unknown) {
-  if (!Array.isArray(value) || value.length === 0) {
-    return true;
+function isOptionalArrayOf<T>(
+  value: unknown,
+  validator: (item: unknown) => item is T,
+) {
+  return value === undefined || (Array.isArray(value) && value.every(validator));
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function isOptionalString(value: unknown) {
+  return value === undefined || typeof value === "string";
+}
+
+function isGoalPriority(value: unknown): value is Goal["priority"] {
+  return value === "LOW" || value === "MEDIUM" || value === "HIGH";
+}
+
+function isGoalStatus(value: unknown): value is Goal["status"] {
+  return (
+    value === "NOT_STARTED" ||
+    value === "IN_PROGRESS" ||
+    value === "COMPLETED" ||
+    value === "PAUSED"
+  );
+}
+
+function isTaskStatus(value: unknown): value is Task["status"] {
+  return value === "TODO" || value === "DONE" || value === "SKIPPED";
+}
+
+function isReminderCategory(value: unknown): value is MindsetReminder["category"] {
+  return value === "STOP" || value === "TRUTH" || value === "LONG_TERM_VISION";
+}
+
+function isTargetArea(value: unknown): value is TargetArea {
+  return isRecord(value) && typeof value.id === "string";
+}
+
+function isGoal(value: unknown): value is Goal {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    typeof value.targetAreaId === "string" &&
+    typeof value.title === "string" &&
+    typeof value.description === "string" &&
+    typeof value.timeline === "string" &&
+    isStringArray(value.executionMethod) &&
+    isStringArray(value.weeklyActions) &&
+    typeof value.successMetric === "string" &&
+    isGoalPriority(value.priority) &&
+    isGoalStatus(value.status) &&
+    typeof value.progressPercentage === "number" &&
+    Number.isFinite(value.progressPercentage) &&
+    isOptionalString(value.notes) &&
+    typeof value.createdAt === "string" &&
+    typeof value.updatedAt === "string"
+  );
+}
+
+function isTask(value: unknown): value is Task {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    isOptionalString(value.goalId) &&
+    typeof value.title === "string" &&
+    isOptionalString(value.description) &&
+    typeof value.date === "string" &&
+    isOptionalString(value.timeBlock) &&
+    (value.durationMinutes === undefined ||
+      (typeof value.durationMinutes === "number" && Number.isFinite(value.durationMinutes))) &&
+    isGoalPriority(value.priority) &&
+    isTaskStatus(value.status) &&
+    isOptionalString(value.notes) &&
+    typeof value.createdAt === "string" &&
+    typeof value.updatedAt === "string"
+  );
+}
+
+function isJournalEntry(value: unknown): value is JournalEntry {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    typeof value.date === "string" &&
+    typeof value.title === "string" &&
+    typeof value.content === "string" &&
+    isOptionalString(value.mood) &&
+    isStringArray(value.linkedGoalIds) &&
+    isStringArray(value.linkedTaskIds) &&
+    isOptionalString(value.progressReflection) &&
+    typeof value.createdAt === "string" &&
+    typeof value.updatedAt === "string"
+  );
+}
+
+function isProgressLog(value: unknown): value is ProgressLog {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    typeof value.goalId === "string" &&
+    typeof value.date === "string" &&
+    typeof value.value === "number" &&
+    Number.isFinite(value.value) &&
+    isOptionalString(value.note)
+  );
+}
+
+function isMindsetReminder(value: unknown): value is MindsetReminder {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    isReminderCategory(value.category) &&
+    typeof value.title === "string" &&
+    typeof value.description === "string"
+  );
+}
+
+function isWeeklySystem(value: unknown): value is WeeklySystem {
+  return (
+    isRecord(value) &&
+    isStringArray(value.weekdayMorning) &&
+    isStringArray(value.weekdayNight) &&
+    isStringArray(value.offDayPlan) &&
+    isStringArray(value.dailyHabits) &&
+    isStringArray(value.focusFlow)
+  );
+}
+
+function isThirtyDayPlan(value: unknown): value is ThirtyDayPlan {
+  return (
+    isRecord(value) &&
+    isStringArray(value.week1To2) &&
+    isStringArray(value.week3) &&
+    isStringArray(value.week4) &&
+    isStringArray(value.finalGoal)
+  );
+}
+
+function isAppSettings(value: unknown): value is AppSettings {
+  if (!isRecord(value)) {
+    return false;
   }
 
-  return isRecord(value[0]) && typeof value[0].id === "string";
+  const defaultRoutine = value.defaultRoutine;
+  const defaultRoutineOk =
+    defaultRoutine === undefined ||
+    (isRecord(defaultRoutine) &&
+      typeof defaultRoutine.offDayBuild === "string" &&
+      typeof defaultRoutine.offDayMonetization === "string" &&
+      typeof defaultRoutine.offDayReview === "string" &&
+      typeof defaultRoutine.workdayMorning === "string" &&
+      typeof defaultRoutine.workdayNight === "string" &&
+      typeof defaultRoutine.workdayWork === "string");
+  const targetAreaOverrides = value.targetAreaOverrides;
+  const overridesOk =
+    targetAreaOverrides === undefined ||
+    (isRecord(targetAreaOverrides) &&
+      Object.values(targetAreaOverrides).every(
+        (override) =>
+          override === undefined ||
+          (isRecord(override) &&
+            isOptionalString(override.label) &&
+            isOptionalString(override.description) &&
+            (override.color === undefined ||
+              (typeof override.color === "string" && isValidColor(override.color)))),
+      ));
+
+  return (
+    (value.dailyFocusLimit === undefined ||
+      (typeof value.dailyFocusLimit === "number" && Number.isFinite(value.dailyFocusLimit))) &&
+    defaultRoutineOk &&
+    isOptionalString(value.lastResetAt) &&
+    overridesOk &&
+    (value.themeAccentColor === undefined ||
+      (typeof value.themeAccentColor === "string" && isValidColor(value.themeAccentColor)))
+  );
+}
+
+function isDailyCompletions(value: unknown): value is DailyCompletionsByDate {
+  return (
+    isRecord(value) &&
+    Object.values(value).every(
+      (completions) =>
+        Array.isArray(completions) &&
+        completions.every(
+          (completion) =>
+            isRecord(completion) &&
+            typeof completion.goalId === "string" &&
+            typeof completion.item === "string" &&
+            typeof completion.completedAt === "string",
+        ),
+    )
+  );
 }
 
 function isPersistedAppState(value: unknown): value is Partial<PersistedAppState> {
@@ -173,21 +362,21 @@ function isPersistedAppState(value: unknown): value is Partial<PersistedAppState
 
   return (
     isOptionalArray(value.targetAreas) &&
-    hasValidFirstId(value.targetAreas) &&
+    isOptionalArrayOf(value.targetAreas, isTargetArea) &&
     isOptionalArray(value.goals) &&
-    hasValidFirstId(value.goals) &&
+    isOptionalArrayOf(value.goals, isGoal) &&
     isOptionalArray(value.tasks) &&
-    hasValidFirstId(value.tasks) &&
+    isOptionalArrayOf(value.tasks, isTask) &&
     isOptionalArray(value.journalEntries) &&
-    hasValidFirstId(value.journalEntries) &&
+    isOptionalArrayOf(value.journalEntries, isJournalEntry) &&
     isOptionalArray(value.progressLogs) &&
-    hasValidFirstId(value.progressLogs) &&
+    isOptionalArrayOf(value.progressLogs, isProgressLog) &&
     isOptionalArray(value.mindsetReminders) &&
-    hasValidFirstId(value.mindsetReminders) &&
-    (value.weeklySystem === undefined || isRecord(value.weeklySystem)) &&
-    (value.thirtyDayPlan === undefined || isRecord(value.thirtyDayPlan)) &&
-    (value.appSettings === undefined || isRecord(value.appSettings)) &&
-    (value.dailyCompletions === undefined || isRecord(value.dailyCompletions))
+    isOptionalArrayOf(value.mindsetReminders, isMindsetReminder) &&
+    (value.weeklySystem === undefined || isWeeklySystem(value.weeklySystem)) &&
+    (value.thirtyDayPlan === undefined || isThirtyDayPlan(value.thirtyDayPlan)) &&
+    (value.appSettings === undefined || isAppSettings(value.appSettings)) &&
+    (value.dailyCompletions === undefined || isDailyCompletions(value.dailyCompletions))
   );
 }
 
@@ -557,21 +746,26 @@ export const useAppStore = create<AppStore>()(
           return false;
         }
 
-        set((state) => ({
-          targetAreas: payload.targetAreas ?? state.targetAreas,
-          goals: payload.goals ?? state.goals,
-          tasks: payload.tasks ?? state.tasks,
-          journalEntries: payload.journalEntries ?? state.journalEntries,
-          progressLogs: payload.progressLogs ?? state.progressLogs,
-          weeklySystem: payload.weeklySystem ?? state.weeklySystem,
-          thirtyDayPlan: payload.thirtyDayPlan ?? state.thirtyDayPlan,
-          mindsetReminders: payload.mindsetReminders ?? state.mindsetReminders,
-          appSettings: payload.appSettings
-            ? { ...state.appSettings, ...payload.appSettings }
-            : state.appSettings,
-          dailyCompletions: payload.dailyCompletions ?? state.dailyCompletions,
-        }));
-        return true;
+        try {
+          set((state) => ({
+            targetAreas: payload.targetAreas ?? state.targetAreas,
+            goals: payload.goals ?? state.goals,
+            tasks: payload.tasks ?? state.tasks,
+            journalEntries: payload.journalEntries ?? state.journalEntries,
+            progressLogs: payload.progressLogs ?? state.progressLogs,
+            weeklySystem: payload.weeklySystem ?? state.weeklySystem,
+            thirtyDayPlan: payload.thirtyDayPlan ?? state.thirtyDayPlan,
+            mindsetReminders: payload.mindsetReminders ?? state.mindsetReminders,
+            appSettings: payload.appSettings
+              ? { ...state.appSettings, ...payload.appSettings }
+              : state.appSettings,
+            dailyCompletions: payload.dailyCompletions ?? state.dailyCompletions,
+          }));
+          return true;
+        } catch (error) {
+          console.warn("Ignored invalid planner import", error);
+          return false;
+        }
       },
       updateMindsetReminder: (id, updates) =>
         set((state) => ({

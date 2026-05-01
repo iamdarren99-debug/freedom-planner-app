@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { theme } from "../../constants/theme";
 import { Goal, JournalEntry, Task } from "../../types/planner";
 import { getAreaMeta } from "../../utils/areaMeta";
+import { safeColor } from "../../utils/colors";
 import { formatDate } from "../../utils/planning";
 import { useAppStore } from "../../store/useAppStore";
 import { SmallAction } from "../forms/SmallAction";
@@ -31,7 +32,7 @@ export function TaskCard({
   const appSettings = useAppStore((state) => state.appSettings);
   const accentColor = goal
     ? getAreaMeta(goal.targetAreaId, appSettings).color
-    : appSettings.themeAccentColor || theme.colors.primary;
+    : safeColor(appSettings.themeAccentColor, theme.colors.primary);
   const done = task.status === "DONE";
   const skipped = task.status === "SKIPPED";
 
