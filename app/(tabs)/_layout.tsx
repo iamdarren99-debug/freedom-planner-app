@@ -61,7 +61,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="planner"
+        name="planner/index"
         options={{
           title: "Planner",
           tabBarIcon: ({ color, size }) => (
@@ -70,7 +70,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="journal"
+        name="journal/index"
         options={{
           title: "Journal",
           tabBarIcon: ({ color, size }) => (
@@ -79,12 +79,19 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="progress"
+        name="progress/index"
         options={{
           title: "Progress",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons color={color} name="chart-box-outline" size={size} />
+            <MaterialCommunityIcons color={color} name="chart-line" size={size} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="progress/log"
+        options={{
+          href: null,
+          title: "Manual progress log",
         }}
       />
     </Tabs>

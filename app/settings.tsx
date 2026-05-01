@@ -10,6 +10,7 @@ import { SmallAction } from "../src/components/forms/SmallAction";
 import { TextField } from "../src/components/forms/TextField";
 import { ColorField } from "../src/components/settings/ColorField";
 import { Card } from "../src/components/ui/Card";
+import { ExpandableCard } from "../src/components/ui/ExpandableCard";
 import { Screen } from "../src/components/ui/Screen";
 import { SectionHeader } from "../src/components/ui/SectionHeader";
 import { ListEditor } from "../src/components/settings/ListEditor";
@@ -18,6 +19,14 @@ import { DefaultRoutine, MindsetReminderCategory, TargetAreaId } from "../src/ty
 import { getAreaMeta } from "../src/utils/areaMeta";
 
 const REMINDER_CATEGORIES: MindsetReminderCategory[] = ["STOP", "TRUTH", "LONG_TERM_VISION"];
+type SettingsSection =
+  | "data"
+  | "mindset"
+  | "plan"
+  | "preferences"
+  | "routine"
+  | "targetAreas"
+  | "weekly";
 const SEED_DEFAULT_ROUTINE: DefaultRoutine = seedAppSettings.defaultRoutine ?? {
   offDayBuild: "2 hours building something useful.",
   offDayMonetization: "2 hours outreach, sales, or client work.",
@@ -29,7 +38,6 @@ const SEED_DEFAULT_ROUTINE: DefaultRoutine = seedAppSettings.defaultRoutine ?? {
 
 export default function SettingsScreen() {
   const appSettings = useAppStore((state) => state.appSettings);
-  const goals = useAppStore((state) => state.goals);
   const mindsetReminders = useAppStore((state) => state.mindsetReminders);
   const thirtyDayPlan = useAppStore((state) => state.thirtyDayPlan);
   const weeklySystem = useAppStore((state) => state.weeklySystem);
@@ -48,6 +56,15 @@ export default function SettingsScreen() {
     useState<MindsetReminderCategory>("STOP");
   const [newReminderDescription, setNewReminderDescription] = useState("");
   const [newReminderTitle, setNewReminderTitle] = useState("");
+  const [expandedSections, setExpandedSections] = useState<Record<SettingsSection, boolean>>({
+    data: false,
+    mindset: false,
+    plan: false,
+    preferences: true,
+    routine: false,
+    targetAreas: false,
+    weekly: false,
+  });
 
   const updateDailyFocusLimit = (delta: number) => {
     updateAppSettings({
@@ -80,6 +97,13 @@ export default function SettingsScreen() {
   };
 
   const defaultRoutine = appSettings.defaultRoutine ?? SEED_DEFAULT_ROUTINE;
+
+  const toggleSection = (section: SettingsSection) => {
+    setExpandedSections((current) => ({
+      ...current,
+      [section]: !current[section],
+    }));
+  };
 
   const confirmReset = () => {
     Alert.alert(
@@ -163,7 +187,11 @@ export default function SettingsScreen() {
     <Screen>
       <SectionHeader title="Customize" />
 
-      <Card style={styles.card}>
+      <ExpandableCard
+        expanded={expandedSections.preferences}
+        onToggle={() => toggleSection("preferences")}
+        title="Preferences"
+      >
         <Text style={styles.label}>Daily focus limit</Text>
         <View style={styles.stepperRow}>
           <Pressable onPress={() => updateDailyFocusLimit(-1)} style={styles.stepperButton}>
@@ -174,9 +202,7 @@ export default function SettingsScreen() {
             <Text style={styles.stepperButtonText}>+</Text>
           </Pressable>
         </View>
-      </Card>
 
-      <Card style={styles.card}>
         <Text style={styles.label}>Default highlight color</Text>
         <ColorField
           label="Fallback accent"
@@ -184,46 +210,45 @@ export default function SettingsScreen() {
           placeholder="Used when no goal area color applies"
           value={appSettings.themeAccentColor ?? ""}
         />
-      </Card>
+      </ExpandableCard>
 
-      <SectionHeader title="Target areas" />
-      {AREA_ORDER.map((areaId) => {
-        const area = getAreaMeta(areaId, appSettings);
+      <ExpandableCard
+        expanded={expandedSections.targetAreas}
+        onToggle={() => toggleSection("targetAreas")}
+        title="Target areas"
+      >
+        {AREA_ORDER.map((areaId) => {
+          const area = getAreaMeta(areaId, appSettings);
 
-        return (
-          <Card key={areaId} style={styles.card}>
-            <Text style={[styles.areaTitle, { color: area.color }]}>{area.label}</Text>
-            <TextField
-              label="Name"
-              onChangeText={(label) => updateTargetArea(areaId, { label })}
-              value={area.label}
-            />
-            <TextField
-              label="Description"
-              multiline
-              onChangeText={(description) => updateTargetArea(areaId, { description })}
-              value={area.description}
-            />
-            <ColorField
-              label="Color"
-              onCommit={(color) => updateTargetArea(areaId, { color })}
-              value={area.color}
-            />
-          </Card>
-        );
-      })}
+          return (
+            <Card key={areaId} style={styles.card}>
+              <Text style={[styles.areaTitle, { color: area.color }]}>{area.label}</Text>
+              <TextField
+                label="Name"
+                onChangeText={(label) => updateTargetArea(areaId, { label })}
+                value={area.label}
+              />
+              <TextField
+                label="Description"
+                multiline
+                onChangeText={(description) => updateTargetArea(areaId, { description })}
+                value={area.description}
+              />
+              <ColorField
+                label="Color"
+                onCommit={(color) => updateTargetArea(areaId, { color })}
+                value={area.color}
+              />
+            </Card>
+          );
+        })}
+      </ExpandableCard>
 
-      <SectionHeader title="Goals" />
-      <Card style={styles.card}>
-        <Text style={styles.value}>{goals.length} goals can be edited from Goal Detail.</Text>
-        <Text style={styles.helperText}>
-          Open Goals, tap a goal, then use Edit goal for title, method, progress, notes, and
-          weekly actions.
-        </Text>
-      </Card>
-
-      <SectionHeader title="Default daily routine" />
-      <Card style={styles.card}>
+      <ExpandableCard
+        expanded={expandedSections.routine}
+        onToggle={() => toggleSection("routine")}
+        title="Default daily routine"
+      >
         <TextField
           label="Workday morning"
           multiline
@@ -260,10 +285,13 @@ export default function SettingsScreen() {
           onChangeText={(offDayReview) => updateRoutine({ offDayReview })}
           value={defaultRoutine.offDayReview}
         />
-      </Card>
+      </ExpandableCard>
 
-      <SectionHeader title="Weekly system and habits" />
-      <Card style={styles.card}>
+      <ExpandableCard
+        expanded={expandedSections.weekly}
+        onToggle={() => toggleSection("weekly")}
+        title="Weekly system and habits"
+      >
         <ListEditor
           label="Weekday morning"
           onChange={(weekdayMorning) => updateWeeklySystem({ weekdayMorning })}
@@ -289,18 +317,24 @@ export default function SettingsScreen() {
           onChange={(focusFlow) => updateWeeklySystem({ focusFlow })}
           value={weeklySystem.focusFlow}
         />
-      </Card>
+      </ExpandableCard>
 
-      <SectionHeader title="30-day action plan" />
-      <Card style={styles.card}>
+      <ExpandableCard
+        expanded={expandedSections.plan}
+        onToggle={() => toggleSection("plan")}
+        title="30-day action plan"
+      >
         <ListEditor label="Week 1-2" onChange={(week1To2) => updateThirtyDayPlan({ week1To2 })} value={thirtyDayPlan.week1To2} />
         <ListEditor label="Week 3" onChange={(week3) => updateThirtyDayPlan({ week3 })} value={thirtyDayPlan.week3} />
         <ListEditor label="Week 4" onChange={(week4) => updateThirtyDayPlan({ week4 })} value={thirtyDayPlan.week4} />
         <ListEditor label="Final goal" onChange={(finalGoal) => updateThirtyDayPlan({ finalGoal })} value={thirtyDayPlan.finalGoal} />
-      </Card>
+      </ExpandableCard>
 
-      <SectionHeader title="Mindset reminders and long-term vision" />
-      <Card style={styles.card}>
+      <ExpandableCard
+        expanded={expandedSections.mindset}
+        onToggle={() => toggleSection("mindset")}
+        title="Mindset reminders"
+      >
         <TextField label="New reminder title" onChangeText={setNewReminderTitle} value={newReminderTitle} />
         <TextField
           label="New reminder description"
@@ -323,50 +357,51 @@ export default function SettingsScreen() {
           label="Add reminder"
           onPress={addReminder}
         />
-      </Card>
-      {mindsetReminders.map((reminder) => (
-        <Card key={reminder.id} style={styles.card}>
-          <Text style={styles.label}>{reminder.category.replaceAll("_", " ")}</Text>
-          <TextField
-            label="Title"
-            onChangeText={(title) => updateMindsetReminder(reminder.id, { title })}
-            value={reminder.title}
-          />
-          <TextField
-            label="Description"
-            multiline
-            onChangeText={(description) =>
-              updateMindsetReminder(reminder.id, { description })
-            }
-            value={reminder.description}
-          />
-          <SmallAction danger label="Delete reminder" onPress={() => confirmDeleteReminder(reminder.id)} />
-        </Card>
-      ))}
+        {mindsetReminders.map((reminder) => (
+          <Card key={reminder.id} style={styles.card}>
+            <Text style={styles.label}>{reminder.category.replaceAll("_", " ")}</Text>
+            <TextField
+              label="Title"
+              onChangeText={(title) => updateMindsetReminder(reminder.id, { title })}
+              value={reminder.title}
+            />
+            <TextField
+              label="Description"
+              multiline
+              onChangeText={(description) =>
+                updateMindsetReminder(reminder.id, { description })
+              }
+              value={reminder.description}
+            />
+            <SmallAction danger label="Delete reminder" onPress={() => confirmDeleteReminder(reminder.id)} />
+          </Card>
+        ))}
+      </ExpandableCard>
 
-      <SectionHeader title="Local data" />
-      <PrimaryButton label="Export data as JSON" onPress={createExport} />
-      <TextField
-        editable={false}
-        label="Export JSON"
-        multiline
-        placeholder="Tap export to generate JSON."
-        value={exportJson}
-      />
-      <TextField
-        label="Import JSON"
-        multiline
-        onChangeText={setImportJson}
-        placeholder="Paste exported JSON here."
-        value={importJson}
-      />
-      <PrimaryButton disabled={!importJson.trim()} label="Import data from JSON" onPress={confirmImport} />
-      <PrimaryButton label="Reset to default seed data" onPress={confirmReset} />
-
-      <Card style={styles.card}>
-        <Text style={styles.label}>App name</Text>
+      <ExpandableCard
+        expanded={expandedSections.data}
+        onToggle={() => toggleSection("data")}
+        title="Local data"
+      >
         <Text style={styles.value}>{APP_NAME}</Text>
-      </Card>
+        <PrimaryButton label="Export data as JSON" onPress={createExport} />
+        <TextField
+          editable={false}
+          label="Export JSON"
+          multiline
+          placeholder="Tap export to generate JSON."
+          value={exportJson}
+        />
+        <TextField
+          label="Import JSON"
+          multiline
+          onChangeText={setImportJson}
+          placeholder="Paste exported JSON here."
+          value={importJson}
+        />
+        <PrimaryButton disabled={!importJson.trim()} label="Import data from JSON" onPress={confirmImport} />
+        <PrimaryButton label="Reset to default seed data" onPress={confirmReset} />
+      </ExpandableCard>
     </Screen>
   );
 }
