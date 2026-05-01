@@ -1,5 +1,6 @@
 import { Goal, JournalEntry, Task, TargetAreaId } from "../types/planner";
 import { getDateKey, isActiveGoal } from "./planning";
+import { getRecentDateKeys } from "./dateKeys";
 
 export function buildWeeklyStats(tasks: Task[]) {
   const lastSevenDays = getRecentDateKeys(7);
@@ -122,12 +123,4 @@ function goalsForArea(goals: Goal[], areaId: TargetAreaId) {
 
 function progressForGoal(goals: Goal[], goalId: string) {
   return goals.find((goal) => goal.id === goalId)?.progressPercentage ?? 0;
-}
-
-function getRecentDateKeys(days: number) {
-  return Array.from({ length: days }, (_, index) => {
-    const date = new Date();
-    date.setDate(date.getDate() - index);
-    return getDateKey(date);
-  });
 }

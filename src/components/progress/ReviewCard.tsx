@@ -14,8 +14,8 @@ export function ReviewCard({ rows, title }: { rows: ReviewRow[]; title: string }
             <Text style={styles.label}>{row.label}</Text>
             {Array.isArray(row.value) ? (
               row.value.length > 0 ? (
-                row.value.map((item) => (
-                  <Text key={item} style={styles.value}>
+                row.value.map((item, index) => (
+                  <Text key={`${index}-${item}`} numberOfLines={2} style={styles.value}>
                     - {item}
                   </Text>
                 ))
@@ -23,7 +23,9 @@ export function ReviewCard({ rows, title }: { rows: ReviewRow[]; title: string }
                 <Text style={styles.value}>No signal yet</Text>
               )
             ) : (
-              <Text style={styles.value}>{row.value}</Text>
+              <Text numberOfLines={3} style={styles.value}>
+                {row.value}
+              </Text>
             )}
           </View>
         ))}

@@ -15,3 +15,7 @@ export function isWeekend(dateKey: string) {
 
   return dayOfWeek === 0 || dayOfWeek === 6;
 }
+
+export function getRecentDateKeys(days: number) {
+  return Array.from({ length: days }, (_, index) => addDays(getDateKey(), -index));
+}

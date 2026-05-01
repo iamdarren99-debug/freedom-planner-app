@@ -1,13 +1,11 @@
 import { AREA_META } from "../constants/app";
 import { Goal, JournalEntry, ProgressLog, TargetAreaId, Task } from "../types/planner";
-import { averageProgress, getDateKey, goalsByArea, isActiveGoal } from "./planning";
+import { getRecentDateKeys } from "./dateKeys";
+import { averageProgress, getDateKey, goalsByArea, isActiveGoal, priorityRank } from "./planning";
 
-const AREA_ORDER: TargetAreaId[] = [
-  "financial",
-  "career-business",
-  "skills",
-  "personal-relationship",
-];
+const WIN_SIGNAL = /\bwin\b/i;
+const PROBLEM_SIGNAL = /\b(problem|stuck|avoid|delay|hard)\b/i;
+const STOP_SIGNAL = /\b(stop|avoid|delay)\b/i;
 
 interface ReviewInput {
   goals: Goal[];
@@ -28,7 +26,9 @@ export function buildWeeklyReview({ goals, journalEntries, progressLogs, tasks }
   const skippedTasks = weekTasks.filter((task) => task.status === "SKIPPED");
   const weekLogs = progressLogs.filter((log) => weekDates.includes(log.date));
   const movedGoalIds = new Set(weekLogs.map((log) => log.goalId));
-  const completedGoalIds = new Set(completedTasks.map((task) => task.goalId).filter(Boolean));
+  const completedGoalIds = new Set(
+    completedTasks.map((task) => task.goalId).filter((goalId): goalId is string => Boolean(goalId)),
+  );
   const movedGoals = goals.filter(
     (goal) => movedGoalIds.has(goal.id) || completedGoalIds.has(goal.id),
   );
@@ -93,14 +93,10 @@ function biggestWin(
   logs: ProgressLog[],
   goals: Goal[],
 ) {
-  const winJournal = journals.find((entry) =>
-    `${entry.title} ${entry.content} ${entry.progressReflection ?? ""}`
-      .toLowerCase()
-      .includes("win"),
-  );
+  const winJournal = bestJournalSignal(journals, WIN_SIGNAL);
 
   if (winJournal) {
-    return winJournal.title;
+    return journalSignalSnippet(winJournal, WIN_SIGNAL);
   }
 
   const latestLog = [...logs].sort((a, b) => b.date.localeCompare(a.date))[0];
@@ -112,36 +108,35 @@ function biggestWin(
 }
 
 function biggestProblem(journals: JournalEntry[], tasks: Task[]) {
-  const problemJournal = journals.find((entry) =>
-    `${entry.title} ${entry.content} ${entry.progressReflection ?? ""}`
-      .toLowerCase()
-      .match(/problem|stuck|avoid|delay|hard/),
-  );
+  const problemJournal = bestJournalSignal(journals, PROBLEM_SIGNAL);
 
   if (problemJournal) {
-    return problemJournal.title;
+    return journalSignalSnippet(problemJournal, PROBLEM_SIGNAL);
   }
 
   return tasks.find((task) => task.status === "SKIPPED")?.title ?? "No clear problem logged yet";
 }
 
 function nextFocus(candidateGoals: Goal[], fallbackGoals: Goal[]) {
-  const goal =
-    [...candidateGoals].sort((a, b) => a.progressPercentage - b.progressPercentage)[0] ??
-    [...fallbackGoals].sort((a, b) => a.progressPercentage - b.progressPercentage)[0];
+  const pool = candidateGoals.length > 0 ? candidateGoals : fallbackGoals;
+  const goal = [...pool].sort((a, b) => {
+    const priorityDelta = priorityRank(b.priority) - priorityRank(a.priority);
+
+    if (priorityDelta !== 0) {
+      return priorityDelta;
+    }
+
+    return a.progressPercentage - b.progressPercentage;
+  })[0];
 
   return goal?.title ?? "Pick one goal to move first";
 }
 
 function stopSignal(skippedTasks: Task[], journals: JournalEntry[]) {
-  const journalSignal = journals.find((entry) =>
-    `${entry.title} ${entry.content} ${entry.progressReflection ?? ""}`
-      .toLowerCase()
-      .match(/stop|avoid|delay/),
-  );
+  const journalSignal = bestJournalSignal(journals, STOP_SIGNAL);
 
   if (journalSignal) {
-    return journalSignal.title;
+    return journalSignalSnippet(journalSignal, STOP_SIGNAL);
   }
 
   return skippedTasks[0]?.title ?? "No stop pattern found yet";
@@ -155,10 +150,44 @@ function titles(tasks: Task[]) {
   return tasks.slice(0, 5).map((task) => task.title);
 }
 
-function getRecentDateKeys(days: number) {
-  return Array.from({ length: days }, (_, index) => {
-    const date = new Date();
-    date.setDate(date.getDate() - index);
-    return getDateKey(date);
-  });
+function journalText(entry: JournalEntry) {
+  return `${entry.title} ${entry.content} ${entry.progressReflection ?? ""}`;
+}
+
+function journalSignalSnippet(entry: JournalEntry, pattern: RegExp) {
+  const matchedField = [entry.progressReflection, entry.content, entry.title].find(
+    (field) => field?.match(pattern),
+  );
+
+  return snippet(matchedField ?? entry.progressReflection ?? entry.content ?? entry.title);
+}
+
+function bestJournalSignal(entries: JournalEntry[], pattern: RegExp) {
+  return entries
+    .map((entry) => ({
+      entry,
+      score: signalScore(entry, pattern),
+    }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || b.entry.date.localeCompare(a.entry.date))[0]
+    ?.entry;
+}
+
+function signalScore(entry: JournalEntry, pattern: RegExp) {
+  const matcher = new RegExp(pattern.source, pattern.flags.includes("i") ? "gi" : "g");
+
+  return [entry.progressReflection, entry.content, entry.title].reduce(
+    (score, field, index) => score + ((field?.match(matcher)?.length ?? 0) * (index === 2 ? 1 : 2)),
+    0,
+  );
+}
+
+function snippet(value: string) {
+  const normalized = value.trim().replace(/\s+/g, " ");
+
+  if (normalized.length <= 90) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, 87)}...`;
 }
