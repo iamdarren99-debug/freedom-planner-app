@@ -4,6 +4,9 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { theme } from "../../src/constants/theme";
+import { ChoiceChip } from "../../src/components/forms/ChoiceChip";
+import { PrimaryButton } from "../../src/components/forms/PrimaryButton";
+import { TextField } from "../../src/components/forms/TextField";
 import { EmptyState } from "../../src/components/ui/EmptyState";
 import { Card } from "../../src/components/ui/Card";
 import { ExpandableCard } from "../../src/components/ui/ExpandableCard";
@@ -12,7 +15,7 @@ import { SectionHeader } from "../../src/components/ui/SectionHeader";
 import { useAppStore } from "../../src/store/useAppStore";
 import { getAreaMeta } from "../../src/utils/areaMeta";
 import { safeColor } from "../../src/utils/colors";
-import { formatDate, getDateKey, priorityRank } from "../../src/utils/planning";
+import { formatDate, getDateKey, isActiveGoal, priorityRank } from "../../src/utils/planning";
 import { Goal, MindsetReminder, Task } from "../../src/types/planner";
 
 const MOTIVATIONAL_LINE = "Focus today. Build daily. Win tomorrow.";
@@ -27,6 +30,7 @@ export default function DashboardScreen() {
   const weeklySystem = useAppStore((state) => state.weeklySystem);
   const thirtyDayPlan = useAppStore((state) => state.thirtyDayPlan);
   const mindsetReminders = useAppStore((state) => state.mindsetReminders);
+  const addTask = useAppStore((state) => state.addTask);
   const completeTask = useAppStore((state) => state.completeTask);
 
   const [expandedCards, setExpandedCards] = useState<Record<ExpandableKey, boolean>>({
@@ -34,9 +38,27 @@ export default function DashboardScreen() {
     thirtyDay: false,
     mindset: true,
   });
+  const [quickAddVisible, setQuickAddVisible] = useState(false);
+  const [quickGoalId, setQuickGoalId] = useState<string | undefined>();
+  const [quickTitle, setQuickTitle] = useState("");
 
   const todayKey = getDateKey();
   const focusLimit = appSettings.dailyFocusLimit;
+  const focusGoals = useMemo(
+    () =>
+      goals
+        .filter(isActiveGoal)
+        .sort((a, b) => {
+          const priorityDelta = priorityRank(b.priority) - priorityRank(a.priority);
+          if (priorityDelta !== 0) {
+            return priorityDelta;
+          }
+
+          return a.title.localeCompare(b.title);
+        })
+        .slice(0, 6),
+    [goals],
+  );
   const todayTasks = useMemo(
     () =>
       tasks
@@ -63,6 +85,25 @@ export default function DashboardScreen() {
       [key]: !current[key],
     }));
   };
+  const saveQuickTask = () => {
+    const title = quickTitle.trim();
+    const selectedGoal = goals.find((goal) => goal.id === quickGoalId);
+
+    if (!title) {
+      return;
+    }
+
+    addTask({
+      date: todayKey,
+      goalId: quickGoalId,
+      priority: selectedGoal?.priority ?? "MEDIUM",
+      timeBlock: "Today",
+      title,
+    });
+    setQuickTitle("");
+    setQuickGoalId(undefined);
+    setQuickAddVisible(false);
+  };
 
   return (
     <Screen>
@@ -73,24 +114,52 @@ export default function DashboardScreen() {
       <View style={styles.sectionBlock}>
         <View style={styles.sectionHeaderRow}>
           <SectionHeader title="Today's Focus" />
-          <Pressable
-            onPress={() => router.navigate({ pathname: "/planner" })}
-            style={styles.textLink}
-          >
-            <Text style={styles.textLinkLabel}>Planner</Text>
-            <MaterialCommunityIcons
-              color={theme.colors.primary}
-              name="arrow-right"
-              size={16}
-            />
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              onPress={() => setQuickAddVisible((value) => !value)}
+              style={styles.textLink}
+            >
+              <Text style={styles.textLinkLabel}>{quickAddVisible ? "Close" : "Add"}</Text>
+              <MaterialCommunityIcons
+                color={theme.colors.primary}
+                name={quickAddVisible ? "close" : "plus"}
+                size={16}
+              />
+            </Pressable>
+            <Pressable
+              onPress={() => router.navigate({ pathname: "/planner" })}
+              style={styles.textLink}
+            >
+              <Text style={styles.textLinkLabel}>Planner</Text>
+              <MaterialCommunityIcons
+                color={theme.colors.primary}
+                name="arrow-right"
+                size={16}
+              />
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.stack}>
+          {quickAddVisible ? (
+            <QuickFocusTaskCard
+              focusGoals={focusGoals}
+              onCancel={() => {
+                setQuickTitle("");
+                setQuickGoalId(undefined);
+                setQuickAddVisible(false);
+              }}
+              onGoalSelect={setQuickGoalId}
+              onSave={saveQuickTask}
+              onTitleChange={setQuickTitle}
+              selectedGoalId={quickGoalId}
+              title={quickTitle}
+            />
+          ) : null}
           {todayTasks.length === 0 ? (
             <EmptyState
               title="No focus tasks"
-              description="Planner tasks for today will appear here when they are ready."
+              description="Add one here or use Planner for a fuller day plan."
             />
           ) : (
             todayTasks.map((task, index) => (
@@ -184,6 +253,61 @@ function TodayTaskCard({
   );
 }
 
+function QuickFocusTaskCard({
+  focusGoals,
+  onCancel,
+  onGoalSelect,
+  onSave,
+  onTitleChange,
+  selectedGoalId,
+  title,
+}: {
+  focusGoals: Goal[];
+  onCancel: () => void;
+  onGoalSelect: (goalId: string | undefined) => void;
+  onSave: () => void;
+  onTitleChange: (value: string) => void;
+  selectedGoalId?: string;
+  title: string;
+}) {
+  return (
+    <Card style={styles.quickCard}>
+      <TextField
+        label="Focus task"
+        onChangeText={onTitleChange}
+        placeholder="What needs to happen today?"
+        value={title}
+      />
+      <View style={styles.goalPicker}>
+        <Text style={styles.goalPickerLabel}>Link to goal</Text>
+        <View style={styles.goalChips}>
+          <ChoiceChip
+            active={!selectedGoalId}
+            label="No goal"
+            onPress={() => onGoalSelect(undefined)}
+          />
+          {focusGoals.map((goal) => (
+            <ChoiceChip
+              active={selectedGoalId === goal.id}
+              key={goal.id}
+              label={goal.title}
+              onPress={() => onGoalSelect(goal.id)}
+            />
+          ))}
+        </View>
+      </View>
+      <View style={styles.quickActions}>
+        <Pressable onPress={onCancel} style={styles.cancelButton}>
+          <Text style={styles.cancelButtonText}>Cancel</Text>
+        </Pressable>
+        <View style={styles.saveButtonWrap}>
+          <PrimaryButton disabled={!title.trim()} label="Add to today" onPress={onSave} />
+        </View>
+      </View>
+    </Card>
+  );
+}
+
 function RoutineSection({ items, title }: { items: string[]; title: string }) {
   return (
     <View style={styles.routineSection}>
@@ -248,6 +372,13 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
     justifyContent: "space-between",
   },
+  headerActions: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing.xs,
+    justifyContent: "flex-end",
+  },
   textLink: {
     alignItems: "center",
     borderRadius: 999,
@@ -263,6 +394,44 @@ const styles = StyleSheet.create({
   },
   stack: {
     gap: theme.spacing.md,
+  },
+  quickCard: {
+    gap: theme.spacing.md,
+  },
+  goalPicker: {
+    gap: theme.spacing.xs,
+  },
+  goalPickerLabel: {
+    color: theme.colors.text,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  goalChips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing.sm,
+  },
+  quickActions: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: theme.spacing.md,
+  },
+  cancelButton: {
+    alignItems: "center",
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    minHeight: 48,
+    justifyContent: "center",
+    paddingHorizontal: theme.spacing.lg,
+  },
+  cancelButtonText: {
+    color: theme.colors.text,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  saveButtonWrap: {
+    flex: 1,
   },
   taskCard: {
     alignItems: "center",
