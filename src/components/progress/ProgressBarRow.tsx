@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { theme } from "../../constants/theme";
 import { Card } from "../ui/Card";
+import { ProgressBar } from "../ui/ProgressBar";
 
 export function ProgressBarRow({
   color,
@@ -20,9 +21,7 @@ export function ProgressBarRow({
         <Text style={styles.progressTitle}>{label}</Text>
         <Text style={styles.progressValue}>{value}%</Text>
       </View>
-      <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: `${value}%`, backgroundColor: color }]} />
-      </View>
+      <ProgressBar color={color} value={value} />
       {note ? <Text style={styles.progressNote}>{note}</Text> : null}
     </Card>
   );
@@ -48,16 +47,6 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontSize: 16,
     fontWeight: "900",
-  },
-  progressTrack: {
-    height: 10,
-    borderRadius: 999,
-    backgroundColor: theme.colors.surfaceAlt,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 999,
   },
   progressNote: {
     color: theme.colors.muted,

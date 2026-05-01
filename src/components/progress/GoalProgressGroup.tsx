@@ -1,32 +1,46 @@
+import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 
 import { theme } from "../../constants/theme";
 import { AppSettings, Goal, ProgressLog } from "../../types/planner";
 import { getAreaMeta } from "../../utils/areaMeta";
-import { latestLogForGoal } from "../../utils/progressMetrics";
 import { ProgressBarRow } from "./ProgressBarRow";
 
 export function GoalProgressGroup({
   goals,
   logs,
   appSettings,
-  titles,
+  goalIds,
 }: {
   appSettings?: AppSettings;
+  goalIds: string[];
   goals: Goal[];
   logs: ProgressLog[];
-  titles: string[];
 }) {
+  const latestLogsByGoal = useMemo(() => {
+    const latest = new Map<string, ProgressLog>();
+
+    for (const log of logs) {
+      const existing = latest.get(log.goalId);
+
+      if (!existing || log.date > existing.date) {
+        latest.set(log.goalId, log);
+      }
+    }
+
+    return latest;
+  }, [logs]);
+
   return (
     <View style={styles.stack}>
-      {titles.map((title) => {
-        const goal = goals.find((item) => item.title === title);
+      {goalIds.map((goalId) => {
+        const goal = goals.find((item) => item.id === goalId);
 
         if (!goal) {
           return null;
         }
 
-        const latestLog = latestLogForGoal(logs, goal.id);
+        const latestLog = latestLogsByGoal.get(goal.id);
 
         return (
           <ProgressBarRow
@@ -34,7 +48,7 @@ export function GoalProgressGroup({
             key={goal.id}
             label={goal.title}
             note={latestLog?.note}
-            value={latestLog?.value ?? goal.progressPercentage}
+            value={goal.progressPercentage}
           />
         );
       })}

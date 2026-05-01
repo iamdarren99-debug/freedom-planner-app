@@ -10,6 +10,7 @@ import { Badge } from "../../../src/components/ui/Badge";
 import { Card } from "../../../src/components/ui/Card";
 import { EmptyState } from "../../../src/components/ui/EmptyState";
 import { ExpandableCard } from "../../../src/components/ui/ExpandableCard";
+import { ProgressBar } from "../../../src/components/ui/ProgressBar";
 import { Screen } from "../../../src/components/ui/Screen";
 import { SectionHeader } from "../../../src/components/ui/SectionHeader";
 import { useAppStore } from "../../../src/store/useAppStore";
@@ -69,14 +70,7 @@ export default function GoalDetailScreen() {
           <Badge label={goal.timeline} />
         </View>
 
-        <View style={styles.progressTrack}>
-          <View
-            style={[
-              styles.progressFill,
-              { width: `${goal.progressPercentage}%`, backgroundColor: area.color },
-            ]}
-          />
-        </View>
+        <ProgressBar color={area.color} value={goal.progressPercentage} />
 
         <Pressable
           onPress={() => setEditing((value) => !value)}
@@ -354,16 +348,6 @@ const styles = StyleSheet.create({
     color: theme.colors.muted,
     fontSize: 14,
     lineHeight: 20,
-  },
-  progressTrack: {
-    height: 10,
-    borderRadius: 999,
-    backgroundColor: theme.colors.surfaceAlt,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 999,
   },
   editButton: {
     alignItems: "center",

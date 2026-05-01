@@ -66,7 +66,12 @@ interface AppActions {
   addGoal: (payload: AddGoalPayload) => Goal;
   updateGoal: (id: string, updates: UpdateGoalPayload) => void;
   deleteGoal: (id: string) => void;
-  updateGoalProgress: (id: string, progressPercentage: number, note?: string) => void;
+  updateGoalProgress: (
+    id: string,
+    progressPercentage: number,
+    note?: string,
+    date?: string,
+  ) => void;
   addTask: (payload: AddTaskPayload) => Task;
   updateTask: (id: string, updates: UpdateTaskPayload) => void;
   completeTask: (id: string, notes?: string) => void;
@@ -281,11 +286,12 @@ export const useAppStore = create<AppStore>()(
             ),
           };
         }),
-      updateGoalProgress: (id, progressPercentage, note) =>
+      updateGoalProgress: (id, progressPercentage, note, date) =>
         set((state) => {
           const now = new Date();
           const goal = state.goals.find((candidate) => candidate.id === id);
           const nextProgress = clampProgress(progressPercentage);
+          const logDate = date ?? getDateKey(now);
 
           if (!goal) {
             return {};
@@ -302,7 +308,7 @@ export const useAppStore = create<AppStore>()(
             progressLogs: upsertProgressLog(state.progressLogs, {
               id: createId("progress"),
               goalId: id,
-              date: getDateKey(now),
+              date: logDate,
               value: nextProgress,
               note,
             }),

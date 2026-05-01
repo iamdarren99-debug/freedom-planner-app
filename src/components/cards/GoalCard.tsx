@@ -8,6 +8,7 @@ import { goalStatusLabel } from "../../utils/planning";
 import { useAppStore } from "../../store/useAppStore";
 import { Badge } from "../ui/Badge";
 import { Card } from "../ui/Card";
+import { ProgressBar } from "../ui/ProgressBar";
 
 interface GoalCardProps {
   goal: Goal;
@@ -68,14 +69,7 @@ export function GoalCard({ goal }: GoalCardProps) {
           <Text style={styles.timeline}>{goal.timeline}</Text>
         </View>
 
-        <View style={styles.progressTrack}>
-          <View
-            style={[
-              styles.progressFill,
-              { width: `${goal.progressPercentage}%`, backgroundColor: area.color },
-            ]}
-          />
-        </View>
+        <ProgressBar color={area.color} height={8} value={goal.progressPercentage} />
         <Text style={styles.progressText}>{goal.progressPercentage}% progress</Text>
       </Card>
     </Pressable>
@@ -129,16 +123,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     lineHeight: 18,
-  },
-  progressTrack: {
-    height: 8,
-    borderRadius: 999,
-    overflow: "hidden",
-    backgroundColor: theme.colors.surfaceAlt,
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 999,
   },
   progressText: {
     color: theme.colors.text,
