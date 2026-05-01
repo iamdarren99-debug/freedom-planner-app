@@ -15,6 +15,13 @@
     "android": {
       "package": "com.iamdarren.freedomplanner",
       "softwareKeyboardLayoutMode": "pan"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9dc89f2c-5f53-4211-9512-b9382969558b"
+      }
+    },
+    "owner": "dawonglym"
   }
 }
