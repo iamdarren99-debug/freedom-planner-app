@@ -1,4 +1,4 @@
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -20,6 +20,7 @@ const MOTIVATIONAL_LINE = "Focus today. Build daily. Win tomorrow.";
 type ExpandableKey = "weekly" | "thirtyDay" | "mindset";
 
 export default function DashboardScreen() {
+  const router = useRouter();
   const goals = useAppStore((state) => state.goals);
   const appSettings = useAppStore((state) => state.appSettings);
   const tasks = useAppStore((state) => state.tasks);
@@ -72,16 +73,17 @@ export default function DashboardScreen() {
       <View style={styles.sectionBlock}>
         <View style={styles.sectionHeaderRow}>
           <SectionHeader title="Today's Focus" />
-          <Link href="/planner" asChild>
-            <Pressable style={styles.textLink}>
-              <Text style={styles.textLinkLabel}>Planner</Text>
-              <MaterialCommunityIcons
-                color={theme.colors.primary}
-                name="arrow-right"
-                size={16}
-              />
-            </Pressable>
-          </Link>
+          <Pressable
+            onPress={() => router.navigate({ pathname: "/planner" })}
+            style={styles.textLink}
+          >
+            <Text style={styles.textLinkLabel}>Planner</Text>
+            <MaterialCommunityIcons
+              color={theme.colors.primary}
+              name="arrow-right"
+              size={16}
+            />
+          </Pressable>
         </View>
 
         <View style={styles.stack}>
