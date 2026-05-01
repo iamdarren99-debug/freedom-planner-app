@@ -20,7 +20,7 @@ import {
   TaskFormMode,
   TaskFormState,
 } from "../../../src/components/planner/TaskEditor";
-import { Card } from "../../../src/components/ui/Card";
+import { ExpandableCard } from "../../../src/components/ui/ExpandableCard";
 import { Screen } from "../../../src/components/ui/Screen";
 import { SectionHeader } from "../../../src/components/ui/SectionHeader";
 import { useAppStore } from "../../../src/store/useAppStore";
@@ -72,6 +72,12 @@ export default function PlannerScreen() {
     [goals, selectedDate, tasks, weeklySystem.dailyHabits],
   );
   const timeBlocks = getTimeBlocksForDay(selectedDate);
+  const editorButtonLabel =
+    editorVisible && formMode === "add"
+      ? "Hide editor"
+      : formMode === "edit"
+        ? "Editing - Cancel"
+        : "+ Add task";
 
   const resetForm = () => {
     setFormMode("add");
@@ -149,18 +155,13 @@ export default function PlannerScreen() {
           onToday={() => setSelectedDate(getDateKey())}
         />
 
-        <Card style={styles.toggleCard}>
-          <Pressable
-            onPress={() => setRoutineExpanded((value) => !value)}
-            style={styles.toggleRow}
-          >
-            <Text style={styles.toggleTitle}>{offDay ? "Off-day plan" : "Workday plan"}</Text>
-            <Text style={styles.toggleAction}>{routineExpanded ? "Hide" : "Show"}</Text>
-          </Pressable>
-          {routineExpanded ? (
-            <RoutineCard isOffDay={offDay} routine={appSettings.defaultRoutine} />
-          ) : null}
-        </Card>
+        <ExpandableCard
+          expanded={routineExpanded}
+          onToggle={() => setRoutineExpanded((value) => !value)}
+          title={offDay ? "Off-day plan" : "Workday plan"}
+        >
+          <RoutineCard isOffDay={offDay} routine={appSettings.defaultRoutine} />
+        </ExpandableCard>
 
         <View style={styles.sectionBlock}>
           <SectionHeader title="Smart task suggestions" />
@@ -206,6 +207,11 @@ export default function PlannerScreen() {
 
         <Pressable
           onPress={() => {
+            if (formMode === "edit") {
+              resetForm();
+              return;
+            }
+
             if (editorVisible && formMode === "add") {
               resetForm();
               return;
@@ -216,9 +222,7 @@ export default function PlannerScreen() {
           }}
           style={styles.addTaskButton}
         >
-          <Text style={styles.addTaskButtonText}>
-            {editorVisible && formMode === "add" ? "Hide editor" : "+ Add task"}
-          </Text>
+          <Text style={styles.addTaskButtonText}>{editorButtonLabel}</Text>
         </Pressable>
 
         {editorVisible ? (
@@ -243,26 +247,6 @@ const styles = StyleSheet.create({
   },
   sectionBlock: {
     gap: theme.spacing.md,
-  },
-  toggleCard: {
-    gap: theme.spacing.md,
-  },
-  toggleRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: theme.spacing.md,
-  },
-  toggleTitle: {
-    color: theme.colors.text,
-    fontSize: 16,
-    fontWeight: "900",
-  },
-  toggleAction: {
-    color: theme.colors.primary,
-    fontSize: 12,
-    fontWeight: "900",
-    textTransform: "uppercase",
   },
   stack: {
     gap: theme.spacing.md,

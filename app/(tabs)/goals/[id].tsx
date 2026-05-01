@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams } from "expo-router";
-import { ReactNode, useState } from "react";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { theme } from "../../../src/constants/theme";
@@ -9,6 +9,7 @@ import { JournalEntryCard } from "../../../src/components/journal/JournalEntryCa
 import { Badge } from "../../../src/components/ui/Badge";
 import { Card } from "../../../src/components/ui/Card";
 import { EmptyState } from "../../../src/components/ui/EmptyState";
+import { ExpandableCard } from "../../../src/components/ui/ExpandableCard";
 import { Screen } from "../../../src/components/ui/Screen";
 import { SectionHeader } from "../../../src/components/ui/SectionHeader";
 import { useAppStore } from "../../../src/store/useAppStore";
@@ -34,6 +35,7 @@ export default function GoalDetailScreen() {
   );
   const updateGoal = useAppStore((state) => state.updateGoal);
   const [editing, setEditing] = useState(false);
+  const [tasksExpanded, setTasksExpanded] = useState(true);
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [logsExpanded, setLogsExpanded] = useState(false);
 
@@ -75,7 +77,6 @@ export default function GoalDetailScreen() {
             ]}
           />
         </View>
-        <Text style={styles.progressText}>{goal.progressPercentage}% complete</Text>
 
         <Pressable
           onPress={() => setEditing((value) => !value)}
@@ -99,8 +100,11 @@ export default function GoalDetailScreen() {
       <InfoPanel title="Execution method" items={goal.executionMethod} />
       <InfoPanel title="Weekly actions" items={goal.weeklyActions} />
 
-      <Card style={styles.panel}>
-        <SectionHeader title="Linked tasks" />
+      <ExpandableCard
+        expanded={tasksExpanded}
+        onToggle={() => setTasksExpanded((value) => !value)}
+        title="Linked tasks"
+      >
         {tasks.length === 0 ? (
           <Text style={styles.emptyText}>No linked tasks yet.</Text>
         ) : (
@@ -116,7 +120,7 @@ export default function GoalDetailScreen() {
             ))}
           </View>
         )}
-      </Card>
+      </ExpandableCard>
 
       <Card style={styles.panel}>
         <SectionHeader title="Linked journal entries" />
@@ -131,7 +135,7 @@ export default function GoalDetailScreen() {
         )}
       </Card>
 
-      <TogglePanel
+      <ExpandableCard
         expanded={logsExpanded}
         onToggle={() => setLogsExpanded((value) => !value)}
         title="Progress logs"
@@ -149,9 +153,9 @@ export default function GoalDetailScreen() {
             ))}
           </View>
         )}
-      </TogglePanel>
+      </ExpandableCard>
 
-      <TogglePanel
+      <ExpandableCard
         expanded={notesExpanded}
         onToggle={() => setNotesExpanded((value) => !value)}
         title="Notes"
@@ -159,7 +163,7 @@ export default function GoalDetailScreen() {
         <Text style={goal.notes ? styles.notesText : styles.emptyText}>
           {goal.notes || "No notes yet."}
         </Text>
-      </TogglePanel>
+      </ExpandableCard>
     </Screen>
   );
 }
@@ -299,28 +303,6 @@ function InfoPanel({ items, title }: { items: string[]; title: string }) {
   );
 }
 
-function TogglePanel({
-  children,
-  expanded,
-  onToggle,
-  title,
-}: {
-  children: ReactNode;
-  expanded: boolean;
-  onToggle: () => void;
-  title: string;
-}) {
-  return (
-    <Card style={styles.panel}>
-      <Pressable onPress={onToggle} style={styles.toggleRow}>
-        <Text style={styles.toggleTitle}>{title}</Text>
-        <Text style={styles.toggleCaret}>{expanded ? "Hide" : "Show"}</Text>
-      </Pressable>
-      {expanded ? <View style={styles.list}>{children}</View> : null}
-    </Card>
-  );
-}
-
 function linesFromText(value: string) {
   return value
     .split(/\r?\n/)
@@ -383,11 +365,6 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: 999,
   },
-  progressText: {
-    color: theme.colors.text,
-    fontSize: 13,
-    fontWeight: "800",
-  },
   editButton: {
     alignItems: "center",
     borderRadius: theme.radius.sm,
@@ -401,23 +378,6 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontSize: 13,
     fontWeight: "900",
-  },
-  toggleRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: theme.spacing.md,
-  },
-  toggleTitle: {
-    color: theme.colors.text,
-    fontSize: 16,
-    fontWeight: "900",
-  },
-  toggleCaret: {
-    color: theme.colors.primary,
-    fontSize: 12,
-    fontWeight: "900",
-    textTransform: "uppercase",
   },
   linkedCard: {
     borderRadius: theme.radius.sm,

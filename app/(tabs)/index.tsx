@@ -6,6 +6,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { theme } from "../../src/constants/theme";
 import { EmptyState } from "../../src/components/ui/EmptyState";
 import { Card } from "../../src/components/ui/Card";
+import { ExpandableCard } from "../../src/components/ui/ExpandableCard";
 import { Screen } from "../../src/components/ui/Screen";
 import { SectionHeader } from "../../src/components/ui/SectionHeader";
 import { useAppStore } from "../../src/store/useAppStore";
@@ -29,11 +30,11 @@ export default function DashboardScreen() {
   const [expandedCards, setExpandedCards] = useState<Record<ExpandableKey, boolean>>({
     weekly: false,
     thirtyDay: false,
-    mindset: false,
+    mindset: true,
   });
 
   const todayKey = getDateKey();
-  const focusLimit = Math.min(appSettings.dailyFocusLimit, 3);
+  const focusLimit = appSettings.dailyFocusLimit;
   const todayTasks = useMemo(
     () =>
       tasks
@@ -180,39 +181,6 @@ function TodayTaskCard({
   );
 }
 
-function ExpandableCard({
-  accentColor,
-  children,
-  expanded,
-  eyebrow,
-  onToggle,
-  title,
-}: {
-  accentColor: string;
-  children: React.ReactNode;
-  expanded: boolean;
-  eyebrow: string;
-  onToggle: () => void;
-  title: string;
-}) {
-  return (
-    <Card style={[styles.expandableCard, { borderColor: `${accentColor}55` }]}>
-      <Pressable onPress={onToggle} style={styles.expandableHeader}>
-        <View style={styles.expandableText}>
-          <Text style={[styles.expandableEyebrow, { color: accentColor }]}>{eyebrow}</Text>
-          <Text style={styles.expandableTitle}>{title}</Text>
-        </View>
-        <MaterialCommunityIcons
-          color={theme.colors.text}
-          name={expanded ? "chevron-up" : "chevron-down"}
-          size={24}
-        />
-      </Pressable>
-      {expanded ? <View style={styles.expandableBody}>{children}</View> : null}
-    </Card>
-  );
-}
-
 function RoutineSection({ items, title }: { items: string[]; title: string }) {
   return (
     <View style={styles.routineSection}>
@@ -334,36 +302,6 @@ const styles = StyleSheet.create({
     height: 38,
     justifyContent: "center",
     width: 38,
-  },
-  expandableCard: {
-    gap: theme.spacing.md,
-  },
-  expandableHeader: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: theme.spacing.md,
-  },
-  expandableText: {
-    flex: 1,
-    gap: 4,
-    minWidth: 0,
-  },
-  expandableEyebrow: {
-    fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-  },
-  expandableTitle: {
-    color: theme.colors.text,
-    fontSize: 20,
-    fontWeight: "900",
-  },
-  expandableBody: {
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    gap: theme.spacing.md,
-    paddingTop: theme.spacing.md,
   },
   routineSection: {
     gap: theme.spacing.xs,
