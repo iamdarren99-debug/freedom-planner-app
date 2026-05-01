@@ -18,6 +18,7 @@ import { Goal, GoalPriority, GoalStatus } from "../../../src/types/planner";
 import { getAreaMeta } from "../../../src/utils/areaMeta";
 import { formatDate, goalStatusLabel } from "../../../src/utils/planning";
 import { getJournalEntriesByGoal } from "../../../src/utils/selectors";
+import { linesFromText } from "../../../src/utils/text";
 
 const PRIORITIES: GoalPriority[] = ["LOW", "MEDIUM", "HIGH"];
 const STATUSES: GoalStatus[] = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "PAUSED"];
@@ -295,13 +296,6 @@ function InfoPanel({ items, title }: { items: string[]; title: string }) {
       </View>
     </Card>
   );
-}
-
-function linesFromText(value: string) {
-  return value
-    .split(/\r?\n/)
-    .map((item) => item.trim())
-    .filter(Boolean);
 }
 
 function clampPercent(value: number) {

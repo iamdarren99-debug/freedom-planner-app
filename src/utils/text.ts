@@ -2,6 +2,13 @@ export function normalizeTitle(value: string) {
   return value.trim().toLowerCase();
 }
 
+export function linesFromText(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 export function toOptionalNumber(value: string) {
   const parsed = Number(value);
 

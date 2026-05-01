@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { linesFromText } from "../../utils/text";
 import { TextField } from "../forms/TextField";
 
 export function ListEditor({
@@ -26,13 +27,4 @@ export function ListEditor({
       value={draft}
     />
   );
-}
-
-export const PlanEditor = ListEditor;
-
-function linesFromText(value: string) {
-  return value
-    .split(/\r?\n/)
-    .map((item) => item.trim())
-    .filter(Boolean);
 }

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { APP_NAME } from "../src/constants/app";
+import { APP_NAME, AREA_ORDER } from "../src/constants/app";
 import { theme } from "../src/constants/theme";
+import { seedAppSettings } from "../src/data/seed";
+import { ChoiceChip } from "../src/components/forms/ChoiceChip";
 import { PrimaryButton } from "../src/components/forms/PrimaryButton";
 import { SmallAction } from "../src/components/forms/SmallAction";
 import { TextField } from "../src/components/forms/TextField";
@@ -10,22 +12,20 @@ import { ColorField } from "../src/components/settings/ColorField";
 import { Card } from "../src/components/ui/Card";
 import { Screen } from "../src/components/ui/Screen";
 import { SectionHeader } from "../src/components/ui/SectionHeader";
-import { ListEditor, PlanEditor } from "../src/components/settings/ListEditor";
+import { ListEditor } from "../src/components/settings/ListEditor";
 import { useAppStore } from "../src/store/useAppStore";
-import {
-  DefaultRoutine,
-  MindsetReminderCategory,
-  TargetAreaId,
-} from "../src/types/planner";
+import { DefaultRoutine, MindsetReminderCategory, TargetAreaId } from "../src/types/planner";
 import { getAreaMeta } from "../src/utils/areaMeta";
 
-const AREA_ORDER: TargetAreaId[] = [
-  "financial",
-  "career-business",
-  "skills",
-  "personal-relationship",
-];
 const REMINDER_CATEGORIES: MindsetReminderCategory[] = ["STOP", "TRUTH", "LONG_TERM_VISION"];
+const SEED_DEFAULT_ROUTINE: DefaultRoutine = seedAppSettings.defaultRoutine ?? {
+  offDayBuild: "2 hours building something useful.",
+  offDayMonetization: "2 hours outreach, sales, or client work.",
+  offDayReview: "1 hour review + planning.",
+  workdayMorning: "5 min spending check + 20-30 min learning/research.",
+  workdayNight: "Build or improve something, review today, write short notes.",
+  workdayWork: "Protect energy. Capture ideas, do not overplan.",
+};
 
 export default function SettingsScreen() {
   const appSettings = useAppStore((state) => state.appSettings);
@@ -79,14 +79,7 @@ export default function SettingsScreen() {
     });
   };
 
-  const defaultRoutine = appSettings.defaultRoutine ?? {
-    workdayMorning: "",
-    workdayWork: "",
-    workdayNight: "",
-    offDayBuild: "",
-    offDayMonetization: "",
-    offDayReview: "",
-  };
+  const defaultRoutine = appSettings.defaultRoutine ?? SEED_DEFAULT_ROUTINE;
 
   const confirmReset = () => {
     Alert.alert(
@@ -146,7 +139,7 @@ export default function SettingsScreen() {
   };
 
   const addReminder = () => {
-    if (!newReminderTitle.trim()) {
+    if (!newReminderTitle.trim() || !newReminderDescription.trim()) {
       return;
     }
 
@@ -184,11 +177,11 @@ export default function SettingsScreen() {
       </Card>
 
       <Card style={styles.card}>
-        <Text style={styles.label}>Theme accent color</Text>
+        <Text style={styles.label}>Default highlight color</Text>
         <ColorField
-          label="Primary accent"
+          label="Fallback accent"
           onCommit={(themeAccentColor) => updateAppSettings({ themeAccentColor })}
-          placeholder="Color name or hex value"
+          placeholder="Used when no goal area color applies"
           value={appSettings.themeAccentColor ?? ""}
         />
       </Card>
@@ -300,10 +293,10 @@ export default function SettingsScreen() {
 
       <SectionHeader title="30-day action plan" />
       <Card style={styles.card}>
-        <PlanEditor label="Week 1-2" onChange={(week1To2) => updateThirtyDayPlan({ week1To2 })} value={thirtyDayPlan.week1To2} />
-        <PlanEditor label="Week 3" onChange={(week3) => updateThirtyDayPlan({ week3 })} value={thirtyDayPlan.week3} />
-        <PlanEditor label="Week 4" onChange={(week4) => updateThirtyDayPlan({ week4 })} value={thirtyDayPlan.week4} />
-        <PlanEditor label="Final goal" onChange={(finalGoal) => updateThirtyDayPlan({ finalGoal })} value={thirtyDayPlan.finalGoal} />
+        <ListEditor label="Week 1-2" onChange={(week1To2) => updateThirtyDayPlan({ week1To2 })} value={thirtyDayPlan.week1To2} />
+        <ListEditor label="Week 3" onChange={(week3) => updateThirtyDayPlan({ week3 })} value={thirtyDayPlan.week3} />
+        <ListEditor label="Week 4" onChange={(week4) => updateThirtyDayPlan({ week4 })} value={thirtyDayPlan.week4} />
+        <ListEditor label="Final goal" onChange={(finalGoal) => updateThirtyDayPlan({ finalGoal })} value={thirtyDayPlan.finalGoal} />
       </Card>
 
       <SectionHeader title="Mindset reminders and long-term vision" />
@@ -317,17 +310,19 @@ export default function SettingsScreen() {
         />
         <View style={styles.chipRow}>
           {REMINDER_CATEGORIES.map((category) => (
-            <SmallAction
+            <ChoiceChip
+              active={newReminderCategory === category}
               key={category}
               label={category.replaceAll("_", " ")}
               onPress={() => setNewReminderCategory(category)}
             />
           ))}
         </View>
-        <Text style={styles.helperText}>
-          Selected category: {newReminderCategory.replaceAll("_", " ")}
-        </Text>
-        <PrimaryButton disabled={!newReminderTitle.trim()} label="Add reminder" onPress={addReminder} />
+        <PrimaryButton
+          disabled={!newReminderTitle.trim() || !newReminderDescription.trim()}
+          label="Add reminder"
+          onPress={addReminder}
+        />
       </Card>
       {mindsetReminders.map((reminder) => (
         <Card key={reminder.id} style={styles.card}>
@@ -352,9 +347,9 @@ export default function SettingsScreen() {
       <SectionHeader title="Local data" />
       <PrimaryButton label="Export data as JSON" onPress={createExport} />
       <TextField
+        editable={false}
         label="Export JSON"
         multiline
-        onChangeText={setExportJson}
         placeholder="Tap export to generate JSON."
         value={exportJson}
       />

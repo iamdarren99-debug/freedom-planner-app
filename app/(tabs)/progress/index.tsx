@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
 
+import { AREA_ORDER } from "../../../src/constants/app";
 import { theme } from "../../../src/constants/theme";
 import { PrimaryButton } from "../../../src/components/forms/PrimaryButton";
 import { TextField } from "../../../src/components/forms/TextField";
@@ -14,7 +15,6 @@ import { MetricCard } from "../../../src/components/progress/MetricCard";
 import { ProgressBarRow } from "../../../src/components/progress/ProgressBarRow";
 import { ReviewCard } from "../../../src/components/progress/ReviewCard";
 import { useAppStore } from "../../../src/store/useAppStore";
-import { TargetAreaId } from "../../../src/types/planner";
 import { getAreaMeta } from "../../../src/utils/areaMeta";
 import {
   averageProgress,
@@ -32,13 +32,6 @@ import {
   isValidDateKey,
 } from "../../../src/utils/progressMetrics";
 import { buildMonthlyReview, buildWeeklyReview } from "../../../src/utils/reviewMetrics";
-
-const AREA_ORDER: TargetAreaId[] = [
-  "financial",
-  "career-business",
-  "skills",
-  "personal-relationship",
-];
 
 export default function ProgressScreen() {
   const goals = useAppStore((state) => state.goals);

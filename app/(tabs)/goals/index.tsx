@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
+import { AREA_ORDER } from "../../../src/constants/app";
 import { theme } from "../../../src/constants/theme";
 import { GoalCard } from "../../../src/components/cards/GoalCard";
 import { EmptyState } from "../../../src/components/ui/EmptyState";
@@ -12,13 +13,6 @@ import { useAppStore } from "../../../src/store/useAppStore";
 import { getAreaMeta } from "../../../src/utils/areaMeta";
 import { averageProgress, goalsByArea } from "../../../src/utils/planning";
 import { TargetAreaId } from "../../../src/types/planner";
-
-const AREA_ORDER: TargetAreaId[] = [
-  "financial",
-  "career-business",
-  "skills",
-  "personal-relationship",
-];
 
 export default function GoalsScreen() {
   const goals = useAppStore((state) => state.goals);

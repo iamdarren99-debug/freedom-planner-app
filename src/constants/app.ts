@@ -4,6 +4,13 @@ import { theme } from "./theme";
 export const APP_NAME = "Freedom Planner";
 export const APP_TAGLINE = "A personal execution system for goals, planning, and daily follow-through.";
 
+export const AREA_ORDER: TargetAreaId[] = [
+  "financial",
+  "career-business",
+  "skills",
+  "personal-relationship",
+];
+
 export const AREA_META: Record<
   TargetAreaId,
   { label: string; description: string; color: string; icon: string }
